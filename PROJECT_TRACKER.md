@@ -46,6 +46,10 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
   - `BLOG_WORKFLOW.md`
   - Weekly blog template
   - Week 1 kickoff draft
+- Finalized all planning answers into canonical runtime policy:
+  - `DECISIONS.md` marked finalized for V1
+  - Added `GET /api/v1/workflows/project-policy`
+  - Added QA checklist, benchmark scaffold, and backup script
 
 ### Tested / Verified
 - File scaffolding and directory layout verified.
@@ -54,7 +58,6 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
 - No unit/integration tests exist yet.
 
 ### Pending (High Level)
-- Finalize remaining product decisions from planning questionnaire (Q22+).
 - Implement real ingestion pipeline (arXiv API + PDF download + parse + chunk).
 - Implement additional source connectors (OpenReview/blogs/X/Reddit/university blogs).
 - Implement local LLM extraction pipeline with strict JSON schema outputs.
@@ -67,16 +70,12 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
 
 ## 2) Master Plan (Execution Phases)
 
-### Phase 0: Decision Freeze (Required)
+### Phase 0: Decision Freeze (Completed)
 Goal: lock defaults so implementation does not thrash.
-- Confirm provider stack (Ollama vs vLLM).
-- Confirm model choices (extraction + synthesis if split).
-- Confirm ingestion window and filters.
-- Confirm schema decisions (mutable vs immutable cards, scoring scales, provenance).
-- Confirm UX priorities for V1 vs V1.1.
+- All planning answers captured and translated into runtime defaults and docs.
 
 Exit criteria:
-- Planning answers captured in one canonical config document.
+- Complete: canonical decisions finalized in `DECISIONS.md`.
 
 ### Phase 1: Core Data + Ingestion
 Goal: reliably ingest weekly papers into DB.
@@ -146,7 +145,7 @@ Tasks:
 - Add typed service errors and API error contracts.
 - Add scheduler wiring (APScheduler or separate worker).
 - Add persistence CRUD for `ResearchBrief`, `ResearchBriefVersion`, `ResearchMemoryEntry`.
-Dependencies: planning freeze for scheduler mode.
+Dependencies: none (planning freeze complete).
 
 ## WS-B Ingestion and Parsing
 Owner: Agent B
@@ -157,7 +156,7 @@ Tasks:
 - PDF downloader with retry/backoff.
 - Parser pipeline (`pymupdf` primary, fallback parser).
 - Section/chunk extraction and cleaning rules.
-Dependencies: decisions on runtime/model stack (Q16+).
+Dependencies: none (planning freeze complete).
 
 ## WS-C LLM Inference and Prompts
 Owner: Agent C
@@ -167,7 +166,7 @@ Tasks:
 - JSON schema validation and retry strategy.
 - Batch orchestration and timeout strategy.
 - Budget tracking and fallback call accounting.
-Dependencies: embedding and schema decisions.
+Dependencies: none (planning freeze complete).
 
 ## WS-D Hypothesis + Clustering
 Owner: Agent D
@@ -212,13 +211,12 @@ Dependencies: tracker updates, export pipeline.
 
 ## 4) Immediate Next Actions (Recommended Order)
 
-1. Answer planning questions in `PLANNING_QUESTIONS.md`.
-2. Continue updating `DECISIONS.md` as answers arrive (single source of truth).
-3. Implement Phase 1 ingestion with DB migrations.
-4. Implement persistence APIs for brief versioning + research memory.
-5. Implement Phase 2 extraction on top of ingested chunks.
-6. Add minimal end-to-end integration test for weekly run.
-7. Start weekly publish loop using `BLOG_WORKFLOW.md` and the template draft.
+1. Implement Phase 1 ingestion with DB migrations.
+2. Implement persistence APIs for brief versioning + research memory.
+3. Implement Phase 2 extraction on top of ingested chunks.
+4. Add benchmark seed papers and regression harness.
+5. Add minimal end-to-end integration test for weekly run.
+6. Start weekly publish loop using `BLOG_WORKFLOW.md` and the template draft.
 
 ## 5) Resume Checklist for Any Agent
 
@@ -241,10 +239,9 @@ Before handoff:
 
 ## 6) Known Risks / Blockers Right Now
 
-- Product decisions are partially frozen; unresolved Q11+ can still cause rework.
+- Multi-source connector reliability and dedupe quality are the main technical risks.
 - Runtime environment (Python/Node versions, Docker availability) unverified.
-- Local model runtime path (Ollama vs vLLM) not locked.
-- Inference runtime defaults are set, but need runtime validation on target machine.
+- Inference runtime defaults are locked, but local throughput/quality is not yet validated.
 - No DB migrations or seed data flow yet.
 
 ## 7) Validation Log

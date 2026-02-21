@@ -32,6 +32,36 @@ class Settings(BaseSettings):
     openrouter_model: str = "meta-llama/llama-3.1-8b-instruct:free"
     openrouter_api_key: str = ""
     embedding_model: str = "nomic-embed-text"
+    embedding_scope: str = "chunks_and_paper"
+    vector_metadata_filters: bool = True
+    alpha_card_versioning: str = "immutable_with_history"
+    novelty_score_mode: str = "ordinal"
+    hypothesis_strength_mode: str = "model_with_human_override"
+    contradiction_edges_enabled: bool = True
+    citation_provenance_required: bool = True
+    auth_required: bool = False
+    cluster_edit_mode: str = "v1_1"
+    hypothesis_user_rating_scale: str = "binary"
+    hotkeys_enabled: bool = True
+    editor_mode: str = "markdown"
+    export_twitter_mode: str = "classic_thread"
+    export_linkedin_tone: str = "founder_voice"
+    export_include_visuals: bool = False
+    export_template_mode: str = "shared_v1"
+    export_delivery_mode: str = "clipboard"
+    deployment_mode: str = "local_only"
+    db_backend: str = "postgres"
+    dev_runtime_mode: str = "native_first"
+    scheduler_mode: str = "in_process"
+    backup_retention_days: int = 7
+    min_acceptable_precision: float = 0.70
+    manual_qa_checklist: bool = True
+    track_model_drift: bool = False
+    benchmark_set_required: bool = True
+    primary_success_metric: str = "output_quality"
+    redact_export_paths: bool = True
+    db_encryption_at_rest: bool = False
+    first_real_weekly_run_date: str = "2026-02-23"
 
     @property
     def ingest_sources_list(self) -> list[str]:

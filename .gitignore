@@ -22,6 +22,7 @@ dist/
 
 # Logs
 *.log
+backups/
 
 # IDE
 .vscode/

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.schemas.domain import (
     InferencePolicyResponse,
     IngestionPolicyResponse,
+    ProjectPolicyResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
@@ -24,3 +25,8 @@ def get_ingestion_policy() -> IngestionPolicyResponse:
 @router.get("/inference-policy", response_model=InferencePolicyResponse)
 def get_inference_policy() -> InferencePolicyResponse:
     return workflow_service.inference_policy()
+
+
+@router.get("/project-policy", response_model=ProjectPolicyResponse)
+def get_project_policy() -> ProjectPolicyResponse:
+    return workflow_service.project_policy()

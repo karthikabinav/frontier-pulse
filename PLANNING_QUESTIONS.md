@@ -102,52 +102,175 @@ No, I want good quality. Determinism is not a requirement
 
 ## Embeddings and Retrieval
 22. Which embedding model should be default (`nomic-embed-text`, `bge-large`, etc.)?
+
+Use your best judgement and take a call
+
 23. Should embeddings be generated for full paper, section chunks, or both?
+
+This depends on how we use it. Since we are retrieving alpha, not sure why emebeddings matter. But use your best judgement
+
+
 24. Must vector search support metadata filters (date/source/cluster) in V1?
+
+Use your best judgement
+
 
 ## Schema and Domain Model
 25. Should `PaperAlphaCard` be immutable snapshots or editable with history?
+
+Yea, we need strong versioning. Otherwise there wont be structure
+
+
 26. For `novelty_score`, use numeric 0–100 or ordinal buckets?
+
+Ordinal buckets are better
+
 27. Should `strength_score` for hypotheses be model-only or model + human override?
+
+Model-only as default. But a human can override. Eventually the goal is to have a good enough corpus to build the AI researcher
+
+
 28. Should contradictions be explicit edges with confidence score?
+
+Yes please/
+
+
 29. Do you need provenance per field (which chunk/passage justified it)?
+
+
+Yeah, citation are important. We need to be able to trace back, just like a researcher.
 
 ## Human-in-the-Loop UX
 30. Do you want login/auth skipped entirely for local V1?
+
+Yes, for v1 no need any of these.
+
 31. Are merge/split cluster operations mandatory for V1 or okay as V1.1?
+
+Use your best judgement
+
 32. For hypothesis table, should user rating be binary, 1-5, or weighted confidence?
+
+Binary is better for this.
+
+
 33. Should we include inline citations/snippets beside each generated claim?
+
+yes citation are important.
+
 34. Rich text editor preference: Markdown textarea or WYSIWYG?
+
+Either is fine. Use your best judgement
+
+
 35. Any required hotkeys (approve/reject/edit-next) for rapid review?
+
+Yeah, hotkeys to make it faster
+
 
 ## Exports and Publishing
 36. For Twitter output, target X long posts or strict classic tweet thread constraints?
+
+Export to twitter with classic tweet thread.
+
+
 37. For LinkedIn output, preferred tone: analytical, conversational, or founder-voice?
+
+Founder voice
+
+
 38. Should export include optional visual assets (graph image) by default?
+
+For V1, let it be text only.
+
 39. Need per-platform style templates editable in UI?
+
+For v1, let them be same. But allow for optionality in the future
+
 40. Should we generate one-click clipboard blocks or downloadable files?
+
+One click clipboard
+
 
 ## Infrastructure and Ops
 41. Deployment target for V1: local-only app, or local + remote backup?
+
+Local only app. In the future we will host on a web, may be. HOwever, I want to push the code to github.
+
+
 42. DB choice confirmed as Postgres only, or SQLite fallback for portability?
+
+Use your best judgement
+
 43. Do you want Docker-first development or native local runtime first?
+
+Use your judgement. But native local seems the right choice?
+
 44. Should scheduler run inside API process, separate worker, or external cron?
+
+Use your best judgement
+
 45. Any requirement for incremental backups/snapshots of DB and outputs?
+
+Yeah, always keep last 7 days backup of the db, so if the code is screwed up, we can roll back safely
+
 
 ## Evaluation and Quality
 46. What is your minimum acceptable extraction precision before weekly use?
+
+I will take a look at back testing the last few days. And then if its say > 0.7 precision, we can start to roll it out. Roll out in the beginning will just be a seperate X and linkedIn acocunt for this project, and then start posting on it. In parallel, I will also post the long-form blog post on **how** this is built, which you are also helping me with this project.
+
+
 47. Do you want a manual QA checklist embedded in UI before export?
+
+Sure, if its helpful
+
 48. Should we track model drift across weeks (same prompt, different behavior)?
+
+No seems overkill
+
 49. Need benchmark set of 10-20 known papers for regression testing?
+
+Good point. In the initial test, we can build this, and then use this as regression test.
+
 50. Which metric matters most initially: time saved, output quality, or insight novelty?
+
+Output quality > insight novelty 
+
+
 
 ## Security and Privacy
 51. Any sensitive documents beyond public papers expected in V1?
+
+No, nothing sensitive
+
 52. Should local filesystem paths and logs be redacted in exported outputs?
+
+Yeah, make it relative paths.
+
 53. Do you want at-rest encryption for DB in V1 or defer?
+
+Use your best judgement
+
+
 
 ## Roadmap Prioritization
 54. Which three V1 features are absolutely non-negotiable?
+
+Ability to scour Arxiv papers, coming from authors in frontier labs and having a unique insight. HOwever, I have trimmed down to the best possible. Note we are building a grand ambition of **open** AI researcher, and this is the first step in cataloging and understanding what are the questions that matter. We can think of the AI researcher we are building learning to do lit survey.
+
+
 55. Which three items can be explicitly deferred to V1.1?
+
+Use your judgement
+
 56. Should we optimize first for robust backend correctness or review UX speed?
+
+BAckend correctness > review UX speed
+
+
 57. Target date for first real weekly run?
+
+I want to start it Monday morning. So this is the weekend project.
+
+

@@ -4,6 +4,7 @@ from app.schemas.domain import (
     InferencePolicyResponse,
     IngestionPolicyResponse,
     PaperSummary,
+    ProjectPolicyResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
@@ -26,4 +27,8 @@ class WorkflowService(ABC):
 
     @abstractmethod
     def inference_policy(self) -> InferencePolicyResponse:
+        raise NotImplementedError
+
+    @abstractmethod
+    def project_policy(self) -> ProjectPolicyResponse:
         raise NotImplementedError

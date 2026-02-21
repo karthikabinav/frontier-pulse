@@ -3,6 +3,7 @@ from app.schemas.domain import (
     InferencePolicyResponse,
     IngestionPolicyResponse,
     PaperSummary,
+    ProjectPolicyResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
@@ -64,6 +65,41 @@ class StubWorkflowService(WorkflowService):
             llm_weekly_budget_usd=settings.llm_weekly_budget_usd,
             llm_weekly_max_calls=settings.llm_weekly_max_calls,
             openrouter_model=settings.openrouter_model,
+        )
+
+    def project_policy(self) -> ProjectPolicyResponse:
+        return ProjectPolicyResponse(
+            embedding_model=settings.embedding_model,
+            embedding_scope=settings.embedding_scope,
+            vector_metadata_filters=settings.vector_metadata_filters,
+            alpha_card_versioning=settings.alpha_card_versioning,
+            novelty_score_mode=settings.novelty_score_mode,
+            hypothesis_strength_mode=settings.hypothesis_strength_mode,
+            contradiction_edges_enabled=settings.contradiction_edges_enabled,
+            citation_provenance_required=settings.citation_provenance_required,
+            auth_required=settings.auth_required,
+            cluster_edit_mode=settings.cluster_edit_mode,
+            hypothesis_user_rating_scale=settings.hypothesis_user_rating_scale,
+            hotkeys_enabled=settings.hotkeys_enabled,
+            editor_mode=settings.editor_mode,
+            export_twitter_mode=settings.export_twitter_mode,
+            export_linkedin_tone=settings.export_linkedin_tone,
+            export_include_visuals=settings.export_include_visuals,
+            export_template_mode=settings.export_template_mode,
+            export_delivery_mode=settings.export_delivery_mode,
+            deployment_mode=settings.deployment_mode,
+            db_backend=settings.db_backend,
+            dev_runtime_mode=settings.dev_runtime_mode,
+            scheduler_mode=settings.scheduler_mode,
+            backup_retention_days=settings.backup_retention_days,
+            min_acceptable_precision=settings.min_acceptable_precision,
+            manual_qa_checklist=settings.manual_qa_checklist,
+            track_model_drift=settings.track_model_drift,
+            benchmark_set_required=settings.benchmark_set_required,
+            primary_success_metric=settings.primary_success_metric,
+            redact_export_paths=settings.redact_export_paths,
+            db_encryption_at_rest=settings.db_encryption_at_rest,
+            first_real_weekly_run_date=settings.first_real_weekly_run_date,
         )
 
 
