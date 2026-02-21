@@ -1,5 +1,11 @@
 from app.config import settings
-from app.schemas.domain import IngestionPolicyResponse, PaperSummary, WorkflowRunRequest, WorkflowRunResponse
+from app.schemas.domain import (
+    InferencePolicyResponse,
+    IngestionPolicyResponse,
+    PaperSummary,
+    WorkflowRunRequest,
+    WorkflowRunResponse,
+)
 from app.services.contracts import PaperService, WorkflowService
 
 
@@ -45,6 +51,19 @@ class StubWorkflowService(WorkflowService):
             chunk_target_tokens=settings.chunk_target_tokens,
             chunk_overlap_tokens=settings.chunk_overlap_tokens,
             semantic_sectioning=settings.semantic_sectioning,
+        )
+
+    def inference_policy(self) -> InferencePolicyResponse:
+        return InferencePolicyResponse(
+            llm_provider=settings.llm_provider,
+            llm_model=settings.llm_model,
+            llm_synthesis_model=settings.llm_synthesis_model,
+            llm_temperature=settings.llm_temperature,
+            llm_enable_cloud_fallback=settings.llm_enable_cloud_fallback,
+            llm_fallback_provider=settings.llm_fallback_provider,
+            llm_weekly_budget_usd=settings.llm_weekly_budget_usd,
+            llm_weekly_max_calls=settings.llm_weekly_max_calls,
+            openrouter_model=settings.openrouter_model,
         )
 
 

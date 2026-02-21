@@ -76,11 +76,29 @@ Yea, the goal is to understand the key hypothesis, claims and results. So the he
 
 ## LLM and Inference
 16. Primary local runner: Ollama or vLLM?
+
+I dont know much about this. The other option is to use openRouter or other free tiers. Let's do some research on this first.
+
 17. Which exact extraction model should be default on your machine?
+
+See the answer to question above.
+
 18. Do you want a second “synthesis model” separate from extraction model?
+
+Let us try to use a free good model and use it for everything, atleast for v1. Just add the flexibility to change these models later.
+
 19. Is optional cloud fallback acceptable in V1, or local-only hard requirement?
+
+See the answers above. Let's research and go with the best judgement you have
+
 20. Max acceptable runtime per weekly batch on your hardware?
+
+Same as above. If we are running API, we can use budget hard caps.
+
 21. Do you want deterministic outputs (temperature near 0) for alpha cards?
+
+No, I want good quality. Determinism is not a requirement
+
 
 ## Embeddings and Retrieval
 22. Which embedding model should be default (`nomic-embed-text`, `bge-large`, etc.)?

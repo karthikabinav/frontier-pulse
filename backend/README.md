@@ -16,3 +16,4 @@ uvicorn app.main:app --reload
 - `GET /api/v1/papers`
 - `POST /api/v1/workflows/weekly-run`
 - `GET /api/v1/workflows/ingestion-policy`
+- `GET /api/v1/workflows/inference-policy`

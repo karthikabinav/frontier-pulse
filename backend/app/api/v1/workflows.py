@@ -1,6 +1,11 @@
 from fastapi import APIRouter
 
-from app.schemas.domain import IngestionPolicyResponse, WorkflowRunRequest, WorkflowRunResponse
+from app.schemas.domain import (
+    InferencePolicyResponse,
+    IngestionPolicyResponse,
+    WorkflowRunRequest,
+    WorkflowRunResponse,
+)
 from app.services.stub_impl import workflow_service
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
@@ -14,3 +19,8 @@ def run_weekly_pipeline(payload: WorkflowRunRequest) -> WorkflowRunResponse:
 @router.get("/ingestion-policy", response_model=IngestionPolicyResponse)
 def get_ingestion_policy() -> IngestionPolicyResponse:
     return workflow_service.ingestion_policy()
+
+
+@router.get("/inference-policy", response_model=InferencePolicyResponse)
+def get_inference_policy() -> InferencePolicyResponse:
+    return workflow_service.inference_policy()

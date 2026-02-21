@@ -22,7 +22,15 @@ class Settings(BaseSettings):
     chunk_overlap_tokens: int = 150
     semantic_sectioning: bool = True
     llm_provider: str = "ollama"
-    llm_model: str = "llama3.1:8b"
+    llm_model: str = "qwen2.5:7b-instruct"
+    llm_synthesis_model: str = "qwen2.5:7b-instruct"
+    llm_temperature: float = 0.35
+    llm_enable_cloud_fallback: bool = True
+    llm_fallback_provider: str = "openrouter"
+    llm_weekly_budget_usd: float = 5.0
+    llm_weekly_max_calls: int = 600
+    openrouter_model: str = "meta-llama/llama-3.1-8b-instruct:free"
+    openrouter_api_key: str = ""
     embedding_model: str = "nomic-embed-text"
 
     @property

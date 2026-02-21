@@ -1,6 +1,12 @@
 from abc import ABC, abstractmethod
 
-from app.schemas.domain import IngestionPolicyResponse, PaperSummary, WorkflowRunRequest, WorkflowRunResponse
+from app.schemas.domain import (
+    InferencePolicyResponse,
+    IngestionPolicyResponse,
+    PaperSummary,
+    WorkflowRunRequest,
+    WorkflowRunResponse,
+)
 
 
 class PaperService(ABC):
@@ -16,4 +22,8 @@ class WorkflowService(ABC):
 
     @abstractmethod
     def ingestion_policy(self) -> IngestionPolicyResponse:
+        raise NotImplementedError
+
+    @abstractmethod
+    def inference_policy(self) -> InferencePolicyResponse:
         raise NotImplementedError

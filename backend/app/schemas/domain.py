@@ -38,3 +38,15 @@ class IngestionPolicyResponse(BaseModel):
     chunk_target_tokens: int
     chunk_overlap_tokens: int
     semantic_sectioning: bool
+
+
+class InferencePolicyResponse(BaseModel):
+    llm_provider: str
+    llm_model: str
+    llm_synthesis_model: str
+    llm_temperature: float
+    llm_enable_cloud_fallback: bool
+    llm_fallback_provider: str
+    llm_weekly_budget_usd: float
+    llm_weekly_max_calls: int
+    openrouter_model: str

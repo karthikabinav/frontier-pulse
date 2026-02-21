@@ -38,6 +38,10 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
   - Semantic sectioning enabled for noisy headings.
 - Added ingestion policy API contract for cross-agent/UI consistency:
   - `GET /api/v1/workflows/ingestion-policy`
+- Added inference policy API contract for cross-agent/UI consistency:
+  - `GET /api/v1/workflows/inference-policy`
+- Added local-first inference adapter scaffold with optional cloud failover:
+  - `backend/app/services/inference.py`
 - Added build-in-public documentation system:
   - `BLOG_WORKFLOW.md`
   - Weekly blog template
@@ -50,7 +54,7 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
 - No unit/integration tests exist yet.
 
 ### Pending (High Level)
-- Finalize remaining product decisions from planning questionnaire (Q16+).
+- Finalize remaining product decisions from planning questionnaire (Q22+).
 - Implement real ingestion pipeline (arXiv API + PDF download + parse + chunk).
 - Implement additional source connectors (OpenReview/blogs/X/Reddit/university blogs).
 - Implement local LLM extraction pipeline with strict JSON schema outputs.
@@ -157,13 +161,13 @@ Dependencies: decisions on runtime/model stack (Q16+).
 
 ## WS-C LLM Inference and Prompts
 Owner: Agent C
-Status: Pending
+Status: In progress (policy + adapter scaffold done)
 Tasks:
-- Inference adapter interface + Ollama implementation.
 - Prompt templates for `PaperAlphaCard`.
 - JSON schema validation and retry strategy.
 - Batch orchestration and timeout strategy.
-Dependencies: model/provider decisions and runtime budget.
+- Budget tracking and fallback call accounting.
+Dependencies: embedding and schema decisions.
 
 ## WS-D Hypothesis + Clustering
 Owner: Agent D
@@ -240,6 +244,7 @@ Before handoff:
 - Product decisions are partially frozen; unresolved Q11+ can still cause rework.
 - Runtime environment (Python/Node versions, Docker availability) unverified.
 - Local model runtime path (Ollama vs vLLM) not locked.
+- Inference runtime defaults are set, but need runtime validation on target machine.
 - No DB migrations or seed data flow yet.
 
 ## 7) Validation Log

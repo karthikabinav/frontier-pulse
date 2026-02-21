@@ -76,6 +76,27 @@ Status: Partially finalized
 - Enable semantic section recognition even with noisy headings.
 - Extraction should interpret structure in the lens of hypotheses, claims, and results.
 
+17. LLM runtime strategy (inferred from Q16-Q21 + research)
+- V1 uses local-first inference with optional cloud fallback.
+- Primary runtime: `Ollama` (local).
+- Fallback runtime: `OpenRouter` (cloud) when local calls fail or quality/routing requires it.
+- Keep model selection configurable to avoid lock-in.
+
+18. Model strategy for V1
+- Use one model for extraction + synthesis in V1, with separate config keys for future split.
+- Default local model: `qwen2.5:7b-instruct`.
+- Default fallback cloud model: `meta-llama/llama-3.1-8b-instruct:free` (can be swapped).
+
+19. Quality vs determinism
+- Determinism is not required.
+- Default temperature set to `0.35` for higher-quality generation diversity while retaining structure.
+
+20. Cost/runtime guardrails
+- Cloud fallback is enabled but budget-capped.
+- Initial guardrails:
+  - weekly fallback budget: `$5.00`
+  - weekly LLM call cap: `600`
+
 ## Implemented from these decisions
 
 - Scheduler defaults updated to nightly 2:00 AM PT in:
@@ -97,6 +118,13 @@ Status: Partially finalized
 - Ingestion policy API expanded to expose parsing policy:
   - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/schemas/domain.py`
   - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/services/stub_impl.py`
+- Inference defaults, runtime guardrails, and policy API added:
+  - `/Users/karthikabinav/kabinav/frontier-pulse/backend/.env.example`
+  - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/config.py`
+  - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/schemas/domain.py`
+  - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/api/v1/workflows.py`
+  - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/services/inference.py`
+  - `/Users/karthikabinav/kabinav/frontier-pulse/backend/app/services/stub_impl.py`
 - Build-in-public workflow and templates added:
   - `/Users/karthikabinav/kabinav/frontier-pulse/BLOG_WORKFLOW.md`
   - `/Users/karthikabinav/kabinav/frontier-pulse/content/blog/templates/weekly_build_log.md`
@@ -105,8 +133,6 @@ Status: Partially finalized
 ## Open Decisions (priority)
 
 - Filter scope: initial keyword list for inference-time compute + reasoning optimization.
-- Local runtime stack: Ollama vs vLLM.
-- Model choices: extraction model and optional synthesis model.
 - Output provenance: required citation/snippets per generated claim.
 - Scoring semantics: novelty and strength numeric scales and human override behavior.
 
