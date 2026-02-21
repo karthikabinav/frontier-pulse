@@ -1,12 +1,21 @@
-from typing import Literal
+from datetime import datetime
+from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
 
 
 class PaperSummary(BaseModel):
-    arxiv_id: str
+    id: int
+    source: str
+    source_id: str
     title: str
     abstract: str
+    published_at: datetime
+
+
+class PaperDetail(PaperSummary):
+    authors: str
+    source_url: str
 
 
 class WorkflowRunRequest(BaseModel):
@@ -19,9 +28,12 @@ class WorkflowRunRequest(BaseModel):
 
 class WorkflowRunResponse(BaseModel):
     status: str
+    run_id: int
     ingested_papers: int
     extracted_alpha_cards: int
     synthesized_hypotheses: int
+    generated_clusters: int
+    brief_version: int
     notes: str
 
 
@@ -84,3 +96,64 @@ class ProjectPolicyResponse(BaseModel):
     redact_export_paths: bool
     db_encryption_at_rest: bool
     first_real_weekly_run_date: str
+
+
+class HypothesisOut(BaseModel):
+    id: int
+    text: str
+    type: str
+    strength_score: float
+    user_override_strength: Optional[float]
+    support_count: int
+    contradiction_count: int
+
+
+class ClusterOut(BaseModel):
+    id: int
+    name: str
+    dominant_bottleneck: str
+    mechanism_summary: str
+    paper_count: int
+
+
+class BriefVersionOut(BaseModel):
+    id: int
+    brief_id: int
+    week_key: str
+    version_number: int
+    editor: str
+    markdown_content: str
+    created_at: datetime
+
+
+class BriefUpdateRequest(BaseModel):
+    week_key: str
+    editor: str = "user"
+    markdown_content: str
+
+
+class ExportRequest(BaseModel):
+    brief_version_id: int
+    include_platforms: list[Literal["twitter", "linkedin", "markdown"]] = Field(
+        default_factory=lambda: ["twitter", "linkedin", "markdown"]
+    )
+
+
+class ExportItem(BaseModel):
+    platform: str
+    content: str
+
+
+class ExportResponse(BaseModel):
+    items: list[ExportItem]
+
+
+class QAItem(BaseModel):
+    id: str
+    title: str
+    required: bool
+    passed: bool
+
+
+class QAResponse(BaseModel):
+    checklist: list[QAItem]

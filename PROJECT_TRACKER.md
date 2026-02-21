@@ -42,6 +42,16 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
   - `GET /api/v1/workflows/inference-policy`
 - Added local-first inference adapter scaffold with optional cloud failover:
   - `backend/app/services/inference.py`
+- Replaced service stubs with DB-backed V1 pipeline:
+  - source ingestion connectors (arXiv/OpenReview/RSS)
+  - semantic chunking + alpha card creation
+  - hypothesis and cluster synthesis
+  - weekly brief generation + versioning
+  - export generation and QA checklist APIs
+- Added API surfaces for V1 review workflow:
+  - `/papers/{id}`, `/hypotheses`, `/clusters`, `/briefs/latest`, `/briefs/update`, `/exports/generate`, `/qa/checklist`
+- Added in-process nightly scheduler wiring at startup/shutdown.
+- Added backend unit tests for chunking and core alpha extraction heuristics.
 - Added build-in-public documentation system:
   - `BLOG_WORKFLOW.md`
   - Weekly blog template
@@ -54,19 +64,18 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
 ### Tested / Verified
 - File scaffolding and directory layout verified.
 - Verified decision and tracker docs exist and are updated.
-- Endpoints and frontend were **not runtime-tested yet** (no install/run executed yet).
-- No unit/integration tests exist yet.
+- Backend runtime smoke-tested with SQLite fallback:
+  - health, policy, weekly-run, papers, hypotheses, clusters, brief endpoints
+- Backend unit tests passing (`pytest -q`):
+  - `3 passed`
+- Frontend dependency install not verified: `npm` not available in current environment.
 
 ### Pending (High Level)
-- Implement real ingestion pipeline (arXiv API + PDF download + parse + chunk).
-- Implement additional source connectors (OpenReview/blogs/X/Reddit/university blogs).
-- Implement local LLM extraction pipeline with strict JSON schema outputs.
-- Implement embeddings + pgvector indexing + retrieval endpoints.
-- Implement hypothesis builder, clustering, tension detection.
-- Implement weekly report builder and export generation.
-- Implement review UX actions and persistence.
-- Add tests, observability, and runbooks.
-- Build blog/export integration so weekly progress can be published for personal branding.
+- Add Alembic migration stack (currently using `create_all` bootstrap).
+- Add robust PDF download+parser integration (current V1 uses source summaries/fulltext stubs for non-PDF sources).
+- Add production-grade connector hardening for X threads and unstable RSS feeds.
+- Add benchmark fixture population (`benchmarks/seed/*`) and precision scoring harness.
+- Validate full frontend runtime once Node/npm is available.
 
 ## 2) Master Plan (Execution Phases)
 
@@ -211,12 +220,11 @@ Dependencies: tracker updates, export pipeline.
 
 ## 4) Immediate Next Actions (Recommended Order)
 
-1. Implement Phase 1 ingestion with DB migrations.
-2. Implement persistence APIs for brief versioning + research memory.
-3. Implement Phase 2 extraction on top of ingested chunks.
-4. Add benchmark seed papers and regression harness.
-5. Add minimal end-to-end integration test for weekly run.
-6. Start weekly publish loop using `BLOG_WORKFLOW.md` and the template draft.
+1. Add Alembic migrations and pin initial schema version.
+2. Populate benchmark set and implement precision evaluator.
+3. Add PDF retrieval/parsing path for arXiv full text when needed.
+4. Validate frontend on machine with Node/npm and run end-to-end UI smoke.
+5. Start weekly publish loop using `BLOG_WORKFLOW.md` and the template draft.
 
 ## 5) Resume Checklist for Any Agent
 
@@ -240,16 +248,27 @@ Before handoff:
 ## 6) Known Risks / Blockers Right Now
 
 - Multi-source connector reliability and dedupe quality are the main technical risks.
-- Runtime environment (Python/Node versions, Docker availability) unverified.
-- Inference runtime defaults are locked, but local throughput/quality is not yet validated.
-- No DB migrations or seed data flow yet.
+- Docker daemon unavailable in this environment during validation.
+- Node/npm unavailable in this environment during frontend validation.
+- Inference runtime defaults are locked, but local model throughput/quality is not yet validated.
+- DB migrations are pending (schema bootstrap currently automatic).
 
 ## 7) Validation Log
 
-No runtime validation executed yet.
-- Not run: backend install
-- Not run: frontend install
-- Not run: docker compose
-- Not run: API smoke test
+Executed:
+- `python3 -m compileall app` (backend syntax check)
+- `source .venv/bin/activate && pip install .` (backend install)
+- `source .venv/bin/activate && DATABASE_URL=\"sqlite+pysqlite:///./frontier_pulse_smoke2.db\" uvicorn app.main:app --port 8002`
+- `curl` smoke checks on:
+  - `/api/v1/health`
+  - `/api/v1/workflows/project-policy`
+  - `/api/v1/workflows/weekly-run`
+  - `/api/v1/papers`
+  - `/api/v1/hypotheses`
+  - `/api/v1/clusters`
+  - `/api/v1/briefs/latest`
+- `source .venv/bin/activate && pytest -q` -> `3 passed`
 
-(Only filesystem scaffold verification completed.)
+Blocked in this environment:
+- `docker compose up -d db` (Docker daemon unavailable)
+- `npm install` (npm not installed)

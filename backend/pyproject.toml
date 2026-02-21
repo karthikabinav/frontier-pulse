@@ -7,7 +7,7 @@ name = "frontier-pulse-backend"
 version = "0.1.0"
 description = "Local-first research intelligence backend"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = [
   "fastapi>=0.116.0",
   "uvicorn[standard]>=0.35.0",
@@ -16,8 +16,11 @@ dependencies = [
   "pgvector>=0.4.1",
   "pydantic-settings>=2.10.0",
   "httpx>=0.28.1",
+  "feedparser>=6.0.11",
+  "python-dateutil>=2.9.0.post0",
   "apscheduler>=3.10.4",
-  "python-dotenv>=1.0.1"
+  "python-dotenv>=1.0.1",
+  "pytest>=8.3.5"
 ]
 
 [tool.setuptools.packages.find]

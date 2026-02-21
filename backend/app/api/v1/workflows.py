@@ -1,5 +1,7 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
+from app.db.session import get_db
 from app.schemas.domain import (
     InferencePolicyResponse,
     IngestionPolicyResponse,
@@ -7,14 +9,14 @@ from app.schemas.domain import (
     WorkflowRunRequest,
     WorkflowRunResponse,
 )
-from app.services.stub_impl import workflow_service
+from app.services.pipeline import workflow_service
 
 router = APIRouter(prefix="/workflows", tags=["workflows"])
 
 
 @router.post("/weekly-run", response_model=WorkflowRunResponse)
-def run_weekly_pipeline(payload: WorkflowRunRequest) -> WorkflowRunResponse:
-    return workflow_service.run_weekly(payload)
+def run_weekly_pipeline(payload: WorkflowRunRequest, db: Session = Depends(get_db)) -> WorkflowRunResponse:
+    return workflow_service.run_weekly(db=db, payload=payload)
 
 
 @router.get("/ingestion-policy", response_model=IngestionPolicyResponse)

@@ -1,18 +1,20 @@
 # Frontier Pulse
 
-Frontier Pulse is a local-first research intelligence system for weekly paper ingestion, structured alpha extraction, hypothesis tracking, and human-in-the-loop publication workflows.
+Frontier Pulse is a local-first research intelligence system that ingests frontier AI artifacts, extracts structured alpha, tracks hypothesis evolution, and supports human-in-the-loop weekly publication.
 
-## Current Status
+## V1 Status
 
-This repository is scaffolded for V1 with:
-- FastAPI backend (`backend/`)
-- PostgreSQL + pgvector via Docker Compose
-- React + Vite frontend shell (`frontend/`)
-- Modular service boundaries for ingestion, extraction, clustering, and reporting
+V1 backend and frontend are implemented with:
+- Multi-source ingestion connectors (arXiv, OpenReview, RSS-based sources)
+- Chunking and alpha card generation pipeline
+- Hypothesis and cluster synthesis
+- Versioned weekly briefs and memory entries
+- QA checklist and export generation (Twitter thread, LinkedIn, markdown)
+- Hotkey-enabled review UI
 
 ## Quick Start
 
-### 1. Start Postgres + pgvector
+### 1. Start database
 
 ```bash
 cd backend
@@ -20,17 +22,17 @@ cp .env.example .env
 docker compose up -d db
 ```
 
-### 2. Run backend
+### 2. Start backend
 
 ```bash
 cd backend
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 uvicorn app.main:app --reload
 ```
 
-### 3. Run frontend
+### 3. Start frontend
 
 ```bash
 cd frontend
@@ -38,12 +40,16 @@ npm install
 npm run dev
 ```
 
-## API docs
-- Swagger: `http://localhost:8000/docs`
-- Health: `GET /api/v1/health`
+### 4. Use dashboard
 
-## Next Steps
-- Complete planner decisions in `PLANNING_QUESTIONS.md`
-- Implement real arXiv ingestion
-- Wire local LLM provider (Ollama/vLLM)
-- Add Alembic migrations and persistence workflow
+- Open `http://localhost:5174`
+- Run workflow and review hypotheses/clusters/brief
+- Save brief and generate exports to clipboard
+
+## Documentation
+
+- Decisions: `DECISIONS.md`
+- Tracker: `PROJECT_TRACKER.md`
+- QA checklist: `docs/QA_CHECKLIST.md`
+- V1 scope: `docs/V1_SCOPE.md`
+- Build in public: `BLOG_WORKFLOW.md`

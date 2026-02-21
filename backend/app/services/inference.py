@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 from typing import Protocol
 
 import httpx
@@ -84,7 +85,7 @@ class FailoverInferenceClient:
     def __init__(
         self,
         primary_client: InferenceClient,
-        fallback_client: InferenceClient | None = None,
+        fallback_client: Optional[InferenceClient] = None,
     ) -> None:
         self.primary_client = primary_client
         self.fallback_client = fallback_client
