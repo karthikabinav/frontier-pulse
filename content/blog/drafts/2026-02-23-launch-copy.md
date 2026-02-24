@@ -47,10 +47,3 @@ Frontier Pulse identifies open research questions in frontier AI, solves and pub
 If you care about AI strategy, research direction, and staying ahead of the curve, follow along.
 
 Intro post: [BLOG_LINK]
-
-## Agent-Friendly Bio Snippet
-
-Frontier Pulse: AI research signal engine.
-Input: frontier research streams.
-Output: weekly hypotheses + trend intelligence.
-Loop: identify, solve, publish, recurse.
