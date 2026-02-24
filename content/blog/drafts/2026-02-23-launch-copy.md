@@ -4,13 +4,13 @@ Use this with the intro link: `[BLOG_LINK]`
 
 ## One-Line Positioning
 
-Frontier Pulse is an AI research system that finds high-signal shifts in frontier AI and improves recursively over time.
+Frontier Pulse is an AI researcher that identifies open research questions, solves and publishes, then recurses.
 
 ## X Post (single)
 
 You’re reading too much AI research.
 
-Frontier Pulse finds what matters, turns it into weekly hypotheses, and improves itself every cycle.
+Frontier Pulse identifies open research questions, solves and publishes, then recurses into the next cycle.
 
 Intro: [BLOG_LINK]
 
@@ -30,8 +30,8 @@ It’s signal clarity.
 - what is durable
 - what trend is accelerating
 
-4/ Frontier Pulse is built as a recursive system:
-output -> evaluate -> improve -> rerun.
+4/ Frontier Pulse recursive loop:
+identify open questions -> solve -> publish -> recurse.
 
 5/ Built in public from day one.
 Follow the build.
@@ -42,7 +42,7 @@ AI research is exploding, but most people still miss signal.
 
 That’s why I’m launching Frontier Pulse.
 
-Frontier Pulse identifies high-signal shifts in frontier AI, turns them into actionable weekly hypotheses, and compounds over time through a recursive improvement loop.
+Frontier Pulse identifies open research questions in frontier AI, solves and publishes, then uses that new knowledge to recurse into the next cycle.
 
 If you care about AI strategy, research direction, and staying ahead of the curve, follow along.
 
@@ -53,4 +53,4 @@ Intro post: [BLOG_LINK]
 Frontier Pulse: AI research signal engine.
 Input: frontier research streams.
 Output: weekly hypotheses + trend intelligence.
-Loop: learn, refine, rerun.
+Loop: identify, solve, publish, recurse.
