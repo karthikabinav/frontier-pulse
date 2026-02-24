@@ -1,9 +1,9 @@
-# Frontier Pulse Build-in-Public Workflow
+# aifrontierpulse Build-in-Public Workflow
 
 Last updated: 2026-02-21
 
 ## Goal
-Use Frontier Pulse development as a personal-branding engine while documenting credible engineering progress.
+Use aifrontierpulse development as a personal-branding engine while documenting credible engineering progress.
 
 ## Publishing Cadence
 - Weekly devlog: 1 post/week
@@ -48,4 +48,4 @@ Use template:
 
 ## Ownership
 - Primary author: You
-- Draft synthesis support: Frontier Pulse export pipeline (planned)
+- Draft synthesis support: aifrontierpulse export pipeline (planned)

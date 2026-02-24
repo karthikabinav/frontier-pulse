@@ -124,7 +124,7 @@ function App() {
     <main className="shell">
       <header className="topbar">
         <div>
-          <h1>Frontier Pulse V1</h1>
+          <h1>aifrontierpulse V1</h1>
           <p className="sub">Automated AI researcher workbench (local-first)</p>
         </div>
         <div className="actions">

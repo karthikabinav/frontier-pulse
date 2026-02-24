@@ -1,16 +1,16 @@
 services:
   db:
     image: pgvector/pgvector:pg16
-    container_name: frontier-pulse-db
+    container_name: aifrontierpulse-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: frontier
       POSTGRES_PASSWORD: frontier
-      POSTGRES_DB: frontier_pulse
+      POSTGRES_DB: aifrontierpulse
     ports:
       - "5432:5432"
     volumes:
-      - frontier_pulse_pgdata:/var/lib/postgresql/data
+      - aifrontierpulse_pgdata:/var/lib/postgresql/data
 
 volumes:
-  frontier_pulse_pgdata:
+  aifrontierpulse_pgdata:

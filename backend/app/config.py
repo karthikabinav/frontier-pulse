@@ -4,9 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    app_name: str = "Frontier Pulse API"
+    app_name: str = "aifrontierpulse API"
     env: str = "dev"
-    database_url: str = "postgresql+psycopg://frontier:frontier@localhost:5432/frontier_pulse"
+    database_url: str = "postgresql+psycopg://frontier:frontier@localhost:5432/aifrontierpulse"
     weekly_cron: str = "0 2 * * *"
     weekly_timezone: str = "America/Los_Angeles"
     default_max_papers: int = 0

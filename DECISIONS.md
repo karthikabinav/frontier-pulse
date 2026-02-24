@@ -1,4 +1,4 @@
-# Frontier Pulse Decisions
+# aifrontierpulse Decisions
 
 Last updated: 2026-02-21
 Status: Finalized for V1

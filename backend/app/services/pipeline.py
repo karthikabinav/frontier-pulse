@@ -132,7 +132,7 @@ def _render_brief(week_key: str, papers: list[Paper], cards: list[PaperAlphaCard
     source_lines = "\n".join([f"- {k}: {v}" for k, v in sorted(count_by_source.items())]) or "- none"
     top_hyp = hyps[0].text if hyps else "No hypotheses generated yet."
 
-    return f"""# Frontier Pulse Weekly Brief ({week_key})
+    return f"""# aifrontierpulse Weekly Brief ({week_key})
 
 ## Field Temperature
 - Total ingested artifacts: {len(papers)}
@@ -347,7 +347,7 @@ class DefaultWorkflowService(WorkflowService):
 
         brief = db.scalar(select(ResearchBrief).where(ResearchBrief.week_key == week_key))
         if not brief:
-            brief = ResearchBrief(week_key=week_key, title=f"Frontier Pulse {week_key}", status="draft")
+            brief = ResearchBrief(week_key=week_key, title=f"aifrontierpulse {week_key}", status="draft")
             db.add(brief)
             db.flush()
 
@@ -537,7 +537,7 @@ class DefaultBriefService(BriefService):
     def update_brief(self, db: Session, payload: BriefUpdateRequest) -> BriefVersionOut:
         brief = db.scalar(select(ResearchBrief).where(ResearchBrief.week_key == payload.week_key))
         if not brief:
-            brief = ResearchBrief(week_key=payload.week_key, title=f"Frontier Pulse {payload.week_key}", status="draft")
+            brief = ResearchBrief(week_key=payload.week_key, title=f"aifrontierpulse {payload.week_key}", status="draft")
             db.add(brief)
             db.flush()
 
@@ -588,7 +588,7 @@ class DefaultExportService(ExportService):
         return "\n\n".join([f"{i+1}/{len(tweets)} {t}" for i, t in enumerate(tweets[:10])])
 
     def _to_linkedin(self, markdown: str) -> str:
-        intro = "Building Frontier Pulse in public: this week’s frontier AI research signal."
+        intro = "Building aifrontierpulse in public: this week’s frontier AI research signal."
         return f"{intro}\n\n{markdown[:2800]}"
 
     def generate(self, db: Session, payload: ExportRequest) -> ExportResponse:

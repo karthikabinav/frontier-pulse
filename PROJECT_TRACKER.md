@@ -1,4 +1,4 @@
-# Frontier Pulse Project Tracker
+# aifrontierpulse Project Tracker
 
 Last updated: 2026-02-21
 Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
@@ -258,7 +258,7 @@ Before handoff:
 Executed:
 - `python3 -m compileall app` (backend syntax check)
 - `source .venv/bin/activate && pip install .` (backend install)
-- `source .venv/bin/activate && DATABASE_URL=\"sqlite+pysqlite:///./frontier_pulse_smoke2.db\" uvicorn app.main:app --port 8002`
+- `source .venv/bin/activate && DATABASE_URL=\"sqlite+pysqlite:///./aifrontierpulse_smoke2.db\" uvicorn app.main:app --port 8002`
 - `curl` smoke checks on:
   - `/api/v1/health`
   - `/api/v1/workflows/project-policy`

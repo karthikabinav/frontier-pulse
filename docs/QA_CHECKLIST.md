@@ -1,4 +1,4 @@
-# Frontier Pulse QA Checklist
+# aifrontierpulse QA Checklist
 
 ## Pre-export gates
 - [ ] Generated claims include inline citations/provenance.

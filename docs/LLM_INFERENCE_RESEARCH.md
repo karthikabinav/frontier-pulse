@@ -3,7 +3,7 @@
 Date: 2026-02-21
 
 ## Objective
-Pick a practical V1 inference strategy for Frontier Pulse with low recurring cost, high flexibility, and good enough quality for structured extraction.
+Pick a practical V1 inference strategy for aifrontierpulse with low recurring cost, high flexibility, and good enough quality for structured extraction.
 
 ## Decision Summary
 - Primary: local inference via Ollama.

@@ -1,16 +1,16 @@
-# Frontier Pulse Launch Copy
+# aifrontierpulse Launch Copy
 
 Use this with the intro link: `[BLOG_LINK]`
 
 ## One-Line Positioning
 
-Frontier Pulse is an AI researcher that identifies open research questions, solves and publishes, then recurses.
+aifrontierpulse is an AI researcher that identifies open research questions, solves and publishes, then recurses.
 
 ## X Post (single)
 
 You’re reading too much AI research.
 
-Frontier Pulse identifies open research questions, solves and publishes, then recurses into the next cycle.
+aifrontierpulse identifies open research questions, solves and publishes, then recurses into the next cycle.
 
 Intro: [BLOG_LINK]
 
@@ -18,7 +18,7 @@ Intro: [BLOG_LINK]
 
 1/ You’re reading too much AI research.
 
-Frontier Pulse finds what matters.
+aifrontierpulse finds what matters.
 
 [BLOG_LINK]
 
@@ -30,7 +30,7 @@ It’s signal clarity.
 - what is durable
 - what trend is accelerating
 
-4/ Frontier Pulse recursive loop:
+4/ aifrontierpulse recursive loop:
 identify open questions -> solve -> publish -> recurse.
 
 5/ Built in public from day one.
@@ -40,9 +40,9 @@ Follow the build.
 
 AI research is exploding, but most people still miss signal.
 
-That’s why I’m launching Frontier Pulse.
+That’s why I’m launching aifrontierpulse.
 
-Frontier Pulse identifies open research questions in frontier AI, solves and publishes, then uses that new knowledge to recurse into the next cycle.
+aifrontierpulse identifies open research questions in frontier AI, solves and publishes, then uses that new knowledge to recurse into the next cycle.
 
 If you care about AI strategy, research direction, and staying ahead of the curve, follow along.
 

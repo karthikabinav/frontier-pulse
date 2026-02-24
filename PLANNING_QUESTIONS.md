@@ -1,4 +1,4 @@
-# Frontier Pulse Planning Questions
+# aifrontierpulse Planning Questions
 
 Answer as many as possible; defaults can be applied where needed.
 

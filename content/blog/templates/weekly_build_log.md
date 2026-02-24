@@ -1,4 +1,4 @@
-# [Week of YYYY-MM-DD] Building Frontier Pulse: [Title]
+# [Week of YYYY-MM-DD] Building aifrontierpulse: [Title]
 
 ## 1) Why this week mattered
 - 

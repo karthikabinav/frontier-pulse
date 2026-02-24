@@ -13,8 +13,8 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   exit 1
 fi
 
-pg_dump "$DATABASE_URL" > "$BACKUP_DIR/frontier_pulse_${TIMESTAMP}.sql"
+pg_dump "$DATABASE_URL" > "$BACKUP_DIR/aifrontierpulse_${TIMESTAMP}.sql"
 
-find "$BACKUP_DIR" -name 'frontier_pulse_*.sql' -type f -mtime +"$RETENTION_DAYS" -delete
+find "$BACKUP_DIR" -name 'aifrontierpulse_*.sql' -type f -mtime +"$RETENTION_DAYS" -delete
 
-echo "Backup complete: $BACKUP_DIR/frontier_pulse_${TIMESTAMP}.sql"
+echo "Backup complete: $BACKUP_DIR/aifrontierpulse_${TIMESTAMP}.sql"

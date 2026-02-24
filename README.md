@@ -1,6 +1,6 @@
-# Frontier Pulse
+# aifrontierpulse
 
-Frontier Pulse is a local-first research intelligence system that ingests frontier AI artifacts, extracts structured alpha, tracks hypothesis evolution, and supports human-in-the-loop weekly publication.
+aifrontierpulse is a local-first research intelligence system that ingests frontier AI artifacts, extracts structured alpha, tracks hypothesis evolution, and supports human-in-the-loop weekly publication.
 
 ## V1 Status
 

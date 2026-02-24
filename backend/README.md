@@ -1,4 +1,4 @@
-# Frontier Pulse Backend
+# aifrontierpulse Backend
 
 ## Run (native)
 
