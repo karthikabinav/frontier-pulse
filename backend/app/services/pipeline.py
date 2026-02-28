@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timezone
+import hashlib
 from typing import Optional
 
 from sqlalchemy import delete, desc, func, select
@@ -58,6 +59,26 @@ def _novelty_bucket(text: str) -> str:
     if any(k in lowered for k in ["incremental", "baseline", "ablation"]):
         return "low"
     return "medium"
+
+
+def _embed_text(text: str, dim: int = 1024) -> list[float]:
+    """Deterministic lightweight embedding placeholder for local-first retrieval.
+
+    Replace with model-based embeddings in a later pass.
+    """
+    if not text:
+        return [0.0] * dim
+    values: list[float] = []
+    seed = text.encode("utf-8", errors="ignore")
+    counter = 0
+    while len(values) < dim:
+        digest = hashlib.sha256(seed + counter.to_bytes(4, "little")).digest()
+        for b in digest:
+            values.append((b / 127.5) - 1.0)
+            if len(values) >= dim:
+                break
+        counter += 1
+    return values
 
 
 def _heuristic_alpha(doc: Paper, chunks: list[PaperChunk]) -> dict[str, str]:
@@ -127,7 +148,38 @@ def _cluster_cards(alpha_cards: list[PaperAlphaCard], week_key: str) -> list[tup
     return clusters
 
 
-def _render_brief(week_key: str, papers: list[Paper], cards: list[PaperAlphaCard], hyps: list[Hypothesis]) -> str:
+def _derive_long_horizon_insights(db: Session, current_week_key: str, lookback: int = 6) -> str:
+    weeks = db.scalars(
+        select(ResearchBrief.week_key).order_by(desc(ResearchBrief.week_key)).limit(max(lookback, 1))
+    ).all()
+    if not weeks:
+        return "No historical signal available yet."
+
+    hyp_rows = db.scalars(
+        select(Hypothesis).where(Hypothesis.week_introduced.in_(weeks)).order_by(desc(Hypothesis.created_at))
+    ).all()
+    cluster_rows = db.scalars(select(Cluster).where(Cluster.week_key.in_(weeks))).all()
+
+    mechanism_counter = Counter([h.type for h in hyp_rows])
+    bottleneck_counter = Counter([c.dominant_bottleneck for c in cluster_rows])
+
+    top_mechanisms = ", ".join([f"{k}({v})" for k, v in mechanism_counter.most_common(3)]) or "none"
+    top_bottlenecks = ", ".join([f"{k}({v})" for k, v in bottleneck_counter.most_common(3)]) or "none"
+
+    return (
+        f"Across the last {len(weeks)} tracked weeks (up to {current_week_key}), "
+        f"the dominant hypothesis types are: {top_mechanisms}. "
+        f"Most persistent bottlenecks are: {top_bottlenecks}."
+    )
+
+
+def _render_brief(
+    week_key: str,
+    papers: list[Paper],
+    cards: list[PaperAlphaCard],
+    hyps: list[Hypothesis],
+    long_horizon_insight: str,
+) -> str:
     count_by_source = Counter([p.source for p in papers])
     source_lines = "\n".join([f"- {k}: {v}" for k, v in sorted(count_by_source.items())]) or "- none"
     top_hyp = hyps[0].text if hyps else "No hypotheses generated yet."
@@ -148,6 +200,9 @@ def _render_brief(week_key: str, papers: list[Paper], cards: list[PaperAlphaCard
 ## Strategic Flags
 - Citation provenance is {'enabled' if settings.citation_provenance_required else 'disabled'}.
 - Quality gate target precision: {settings.min_acceptable_precision:.2f}
+
+## Long-Horizon Insight
+- {long_horizon_insight}
 
 ## Open Questions
 - Which mechanisms remain robust across revised versions?
@@ -239,6 +294,7 @@ class DefaultWorkflowService(WorkflowService):
             abstract=doc.abstract,
             full_text=body,
             source_url=doc.source_url,
+            embedding_vector=_embed_text(f"{doc.title}\n{doc.abstract}", dim=1024),
         )
         db.add(paper)
         db.flush()
@@ -256,6 +312,7 @@ class DefaultWorkflowService(WorkflowService):
                     chunk_index=idx,
                     text=chunk.text,
                     estimated_tokens=chunk.estimated_tokens,
+                    embedding_vector=_embed_text(chunk.text[:4000], dim=1024),
                 )
             )
         return paper
@@ -359,7 +416,8 @@ class DefaultWorkflowService(WorkflowService):
             select(func.max(ResearchBriefVersion.version_number)).where(ResearchBriefVersion.brief_id == brief.id)
         )
         version_number = int(current_version or 0) + 1
-        markdown = _render_brief(week_key, papers_added, alpha_cards, hypotheses)
+        long_horizon_insight = _derive_long_horizon_insights(db, week_key, lookback=6)
+        markdown = _render_brief(week_key, papers_added, alpha_cards, hypotheses, long_horizon_insight)
         brief_version = ResearchBriefVersion(
             brief_id=brief.id,
             version_number=version_number,
@@ -368,19 +426,49 @@ class DefaultWorkflowService(WorkflowService):
         )
         db.add(brief_version)
 
-        # Memory entries
+        # Memory entries (richer nugget + trend persistence)
         for hyp in hypotheses:
-            key = f"{week_key}:{hyp.id}"
+            key = f"{week_key}:hypothesis:{hyp.id}"
+            summary = hyp.text
             db.merge(
                 ResearchMemoryEntry(
                     memory_key=key,
                     memory_type="hypothesis",
                     title=hyp.text[:180],
-                    summary=hyp.text,
+                    summary=summary,
                     source_week=week_key,
-                    provenance="auto-generated from alpha cards",
+                    provenance="derived from linked alpha cards with provenance snippets",
+                    embedding_vector=_embed_text(summary, dim=1024),
                 )
             )
+
+        for card in alpha_cards:
+            key = f"{week_key}:alpha:{card.paper_id}:{card.version_number}"
+            summary = f"{card.short_alpha_summary}\nMechanism={card.mechanism_type}; Bottleneck={card.bottleneck_attacked}; Novelty={card.novelty_bucket}."
+            db.merge(
+                ResearchMemoryEntry(
+                    memory_key=key,
+                    memory_type="alpha_nugget",
+                    title=summary[:180],
+                    summary=summary,
+                    source_week=week_key,
+                    provenance=card.provenance_snippets[:1500],
+                    embedding_vector=_embed_text(summary, dim=1024),
+                )
+            )
+
+        trend_key = f"{week_key}:trend:long_horizon"
+        db.merge(
+            ResearchMemoryEntry(
+                memory_key=trend_key,
+                memory_type="weekly_synthesis",
+                title=f"Long-horizon synthesis {week_key}",
+                summary=long_horizon_insight,
+                source_week=week_key,
+                provenance="computed from prior hypotheses and clusters",
+                embedding_vector=_embed_text(long_horizon_insight, dim=1024),
+            )
+        )
 
         run.total_items = len(papers_added)
         run.completed_at = datetime.now(timezone.utc)

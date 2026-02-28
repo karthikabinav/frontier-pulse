@@ -13,6 +13,11 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
   - Added deployment readiness runbook under `docs/deployment/DEPLOYMENT_READINESS.md`.
   - Hardened source connectors with retry/backoff and explicit User-Agent.
 - Implemented arXiv PDF full-text ingestion path with parser fallback (`pymupdf` -> `pdfminer`) and safe fallback to abstract text.
+- Improved long-horizon memory persistence:
+  - Store deterministic embeddings for papers/chunks/memory entries.
+  - Persist alpha nuggets as first-class memory entries.
+  - Persist weekly long-horizon synthesis derived from prior weeks.
+  - Include long-horizon synthesis in generated weekly brief.
 - Created new project folder outside old site repo.
 - Added root docs:
   - `README.md`
