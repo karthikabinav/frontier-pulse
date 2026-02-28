@@ -40,8 +40,17 @@ from app.schemas.domain import (
     WorkflowRunRequest,
     WorkflowRunResponse,
     MemoryEntryOut,
+    DiagnosticsResponse,
 )
-from app.services.contracts import AnalysisService, BriefService, ExportService, PaperService, QAService, WorkflowService
+from app.services.contracts import (
+    AnalysisService,
+    BriefService,
+    ExportService,
+    PaperService,
+    QAService,
+    WorkflowService,
+    DiagnosticsService,
+)
 from app.services.inference import FailoverInferenceClient, InferenceRequest, OllamaClient, OpenRouterClient
 from app.services.sources import ArxivConnector, OpenReviewConnector, RSSConnector, SourceDocument, default_rss_sources
 from app.services.text_utils import make_chunks, strip_reference_tail
@@ -775,9 +784,43 @@ class DefaultQAService(QAService):
         )
 
 
+class DefaultDiagnosticsService(DiagnosticsService):
+    def status(self, db: Session) -> DiagnosticsResponse:
+        latest_brief = db.scalar(select(ResearchBrief).order_by(desc(ResearchBrief.updated_at)))
+        latest_run = db.scalar(select(IngestionRun).order_by(desc(IngestionRun.started_at)))
+
+        mem_total = db.scalar(select(func.count(ResearchMemoryEntry.id))) or 0
+        mem_hyp = db.scalar(
+            select(func.count(ResearchMemoryEntry.id)).where(ResearchMemoryEntry.memory_type == "hypothesis")
+        ) or 0
+        mem_alpha = db.scalar(
+            select(func.count(ResearchMemoryEntry.id)).where(ResearchMemoryEntry.memory_type == "alpha_nugget")
+        ) or 0
+        mem_weekly = db.scalar(
+            select(func.count(ResearchMemoryEntry.id)).where(ResearchMemoryEntry.memory_type == "weekly_synthesis")
+        ) or 0
+
+        return DiagnosticsResponse(
+            db_ok=True,
+            scheduler_mode=settings.scheduler_mode,
+            latest_week_key=latest_brief.week_key if latest_brief else None,
+            paper_count=int(db.scalar(select(func.count(Paper.id))) or 0),
+            alpha_card_count=int(db.scalar(select(func.count(PaperAlphaCard.id))) or 0),
+            hypothesis_count=int(db.scalar(select(func.count(Hypothesis.id))) or 0),
+            cluster_count=int(db.scalar(select(func.count(Cluster.id))) or 0),
+            memory_total_count=int(mem_total),
+            memory_hypothesis_count=int(mem_hyp),
+            memory_alpha_nugget_count=int(mem_alpha),
+            memory_weekly_synthesis_count=int(mem_weekly),
+            last_run_notes=latest_run.notes if latest_run else None,
+            last_run_completed_at=latest_run.completed_at if latest_run else None,
+        )
+
+
 paper_service = DefaultPaperService()
 workflow_service = DefaultWorkflowService()
 analysis_service = DefaultAnalysisService()
 brief_service = DefaultBriefService()
 export_service = DefaultExportService()
 qa_service = DefaultQAService()
+diagnostics_service = DefaultDiagnosticsService()

@@ -19,6 +19,7 @@ from app.schemas.domain import (
     WorkflowRunResponse,
     HypothesisOut,
     MemoryEntryOut,
+    DiagnosticsResponse,
 )
 
 
@@ -89,4 +90,10 @@ class ExportService(ABC):
 class QAService(ABC):
     @abstractmethod
     def checklist(self, db: Session) -> QAResponse:
+        raise NotImplementedError
+
+
+class DiagnosticsService(ABC):
+    @abstractmethod
+    def status(self, db: Session) -> DiagnosticsResponse:
         raise NotImplementedError

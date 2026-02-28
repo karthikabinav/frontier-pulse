@@ -28,6 +28,7 @@ docker compose up -d db
 ## API
 
 - `GET /api/v1/health`
+- `GET /api/v1/diagnostics`
 - `GET /api/v1/papers`
 - `GET /api/v1/papers/{paper_id}`
 - `POST /api/v1/workflows/weekly-run`

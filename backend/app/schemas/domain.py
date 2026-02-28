@@ -171,3 +171,19 @@ class QAItem(BaseModel):
 
 class QAResponse(BaseModel):
     checklist: list[QAItem]
+
+
+class DiagnosticsResponse(BaseModel):
+    db_ok: bool
+    scheduler_mode: str
+    latest_week_key: Optional[str]
+    paper_count: int
+    alpha_card_count: int
+    hypothesis_count: int
+    cluster_count: int
+    memory_total_count: int
+    memory_hypothesis_count: int
+    memory_alpha_nugget_count: int
+    memory_weekly_synthesis_count: int
+    last_run_notes: Optional[str]
+    last_run_completed_at: Optional[datetime]
