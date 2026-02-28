@@ -18,6 +18,7 @@ from app.schemas.domain import (
     WorkflowRunRequest,
     WorkflowRunResponse,
     HypothesisOut,
+    MemoryEntryOut,
 )
 
 
@@ -56,6 +57,16 @@ class AnalysisService(ABC):
 
     @abstractmethod
     def list_clusters(self, db: Session, week_key: Optional[str] = None) -> list[ClusterOut]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_memory(
+        self,
+        db: Session,
+        week_key: Optional[str] = None,
+        memory_type: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[MemoryEntryOut]:
         raise NotImplementedError
 
 

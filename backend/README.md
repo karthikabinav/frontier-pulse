@@ -35,6 +35,7 @@ docker compose up -d db
 - `GET /api/v1/workflows/inference-policy`
 - `GET /api/v1/workflows/project-policy`
 - `GET /api/v1/hypotheses`
+- `GET /api/v1/memory`
 - `GET /api/v1/clusters`
 - `GET /api/v1/briefs/latest`
 - `POST /api/v1/briefs/update`

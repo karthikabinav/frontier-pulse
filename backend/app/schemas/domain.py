@@ -116,6 +116,18 @@ class ClusterOut(BaseModel):
     paper_count: int
 
 
+class MemoryEntryOut(BaseModel):
+    id: int
+    memory_key: str
+    memory_type: str
+    title: str
+    summary: str
+    source_week: str
+    provenance: str
+    created_at: datetime
+    updated_at: datetime
+
+
 class BriefVersionOut(BaseModel):
     id: int
     brief_id: int

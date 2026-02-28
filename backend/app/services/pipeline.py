@@ -39,6 +39,7 @@ from app.schemas.domain import (
     QAResponse,
     WorkflowRunRequest,
     WorkflowRunResponse,
+    MemoryEntryOut,
 )
 from app.services.contracts import AnalysisService, BriefService, ExportService, PaperService, QAService, WorkflowService
 from app.services.inference import FailoverInferenceClient, InferenceRequest, OllamaClient, OpenRouterClient
@@ -598,6 +599,35 @@ class DefaultAnalysisService(AnalysisService):
                 )
             )
         return out
+
+    def list_memory(
+        self,
+        db: Session,
+        week_key: Optional[str] = None,
+        memory_type: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[MemoryEntryOut]:
+        query = select(ResearchMemoryEntry)
+        if week_key:
+            query = query.where(ResearchMemoryEntry.source_week == week_key)
+        if memory_type:
+            query = query.where(ResearchMemoryEntry.memory_type == memory_type)
+
+        rows = db.scalars(query.order_by(desc(ResearchMemoryEntry.updated_at)).limit(limit)).all()
+        return [
+            MemoryEntryOut(
+                id=row.id,
+                memory_key=row.memory_key,
+                memory_type=row.memory_type,
+                title=row.title,
+                summary=row.summary,
+                source_week=row.source_week,
+                provenance=row.provenance,
+                created_at=row.created_at,
+                updated_at=row.updated_at,
+            )
+            for row in rows
+        ]
 
 
 class DefaultBriefService(BriefService):
