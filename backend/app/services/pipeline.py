@@ -279,6 +279,29 @@ class DefaultWorkflowService(WorkflowService):
                     return True
         return False
 
+    def _topic_score(self, doc: SourceDocument) -> int:
+        if not settings.topic_bias_enabled:
+            return 0
+        text = f"{doc.title}\n{doc.abstract}".lower()
+        score = 0
+        for kw in settings.topic_bias_keywords_list:
+            if kw in text:
+                score += 1
+        return score
+
+    def _prioritize_docs(self, docs: list[SourceDocument], max_items: int) -> list[SourceDocument]:
+        ranked = sorted(
+            docs,
+            key=lambda d: (
+                self._topic_score(d),
+                d.published_at,
+            ),
+            reverse=True,
+        )
+        if max_items > 0:
+            return ranked[:max_items]
+        return ranked
+
     def _store_paper(self, db: Session, doc: SourceDocument) -> Paper:
         body = doc.full_text
         if settings.appendix_policy == "main_first_fallback":
@@ -373,8 +396,11 @@ class DefaultWorkflowService(WorkflowService):
             except Exception as exc:
                 source_errors.append(f"{source}:{exc}")
 
+        prioritized_docs = self._prioritize_docs(docs, max_items=max_items)
+        topic_matches = sum(1 for d in prioritized_docs if self._topic_score(d) > 0)
+
         papers_added: list[Paper] = []
-        for doc in docs:
+        for doc in prioritized_docs:
             if self._dedupe_exists(db, doc):
                 continue
             papers_added.append(self._store_paper(db, doc))
@@ -475,7 +501,7 @@ class DefaultWorkflowService(WorkflowService):
         run.completed_at = datetime.now(timezone.utc)
         error_suffix = f" errors={'; '.join(source_errors[:3])}" if source_errors else ""
         run.notes = (
-            f"ingested={len(papers_added)} hypotheses={len(hypotheses)} clusters={len(clusters)}{error_suffix}"
+            f"ingested={len(papers_added)} topic_matched={topic_matches} hypotheses={len(hypotheses)} clusters={len(clusters)}{error_suffix}"
         )
         db.commit()
 
@@ -504,6 +530,8 @@ class DefaultWorkflowService(WorkflowService):
             chunk_target_tokens=settings.chunk_target_tokens,
             chunk_overlap_tokens=settings.chunk_overlap_tokens,
             semantic_sectioning=settings.semantic_sectioning,
+            topic_bias_enabled=settings.topic_bias_enabled,
+            topic_bias_keywords=settings.topic_bias_keywords_list,
         )
 
     def inference_policy(self) -> InferencePolicyResponse:

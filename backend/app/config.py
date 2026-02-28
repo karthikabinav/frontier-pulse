@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     chunk_target_tokens: int = 1200
     chunk_overlap_tokens: int = 150
     semantic_sectioning: bool = True
+    topic_bias_enabled: bool = True
+    topic_bias_keywords: str = (
+        "llm post-training,reinforcement learning,rlhf,agentic systems,tool learning,"
+        "adaptive reasoning,inference-time optimization,parallel scaling,"
+        "hallucination detection,online rl,bandits,online learning,recommender systems,safety"
+    )
     llm_provider: str = "ollama"
     llm_model: str = "qwen2.5:7b-instruct"
     llm_synthesis_model: str = "qwen2.5:7b-instruct"
@@ -71,6 +77,10 @@ class Settings(BaseSettings):
     @property
     def arxiv_categories_list(self) -> list[str]:
         return [item.strip() for item in self.arxiv_categories.split(",") if item.strip()]
+
+    @property
+    def topic_bias_keywords_list(self) -> list[str]:
+        return [item.strip().lower() for item in self.topic_bias_keywords.split(",") if item.strip()]
 
 
 settings = Settings()

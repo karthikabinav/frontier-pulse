@@ -50,6 +50,8 @@ class IngestionPolicyResponse(BaseModel):
     chunk_target_tokens: int
     chunk_overlap_tokens: int
     semantic_sectioning: bool
+    topic_bias_enabled: bool
+    topic_bias_keywords: list[str]
 
 
 class InferencePolicyResponse(BaseModel):
