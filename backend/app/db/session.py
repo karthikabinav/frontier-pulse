@@ -11,10 +11,18 @@ engine = create_engine(settings.database_url, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, class_=Session)
 
 
-def init_db() -> None:
+def ensure_db_extensions() -> None:
     with engine.begin() as conn:
         if "postgresql" in settings.database_url:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+
+
+def init_db() -> None:
+    """Fallback bootstrap for local/dev only.
+
+    Production path should run Alembic migrations.
+    """
+    ensure_db_extensions()
     Base.metadata.create_all(bind=engine)
 
 

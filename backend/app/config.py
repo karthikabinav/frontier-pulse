@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     export_delivery_mode: str = "clipboard"
     deployment_mode: str = "local_only"
     db_backend: str = "postgres"
+    db_init_mode: str = "migrate"  # migrate | create_all
     dev_runtime_mode: str = "native_first"
     scheduler_mode: str = "in_process"
     backup_retention_days: int = 7

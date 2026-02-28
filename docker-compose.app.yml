@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: frontier
+      POSTGRES_PASSWORD: frontier
+      POSTGRES_DB: aifrontierpulse
+    volumes:
+      - aifrontierpulse_pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg://frontier:frontier@db:5432/aifrontierpulse
+      DB_INIT_MODE: migrate
+      SCHEDULER_MODE: in_process
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "5174:80"
+
+volumes:
+  aifrontierpulse_pgdata:

@@ -1,11 +1,17 @@
 # aifrontierpulse Project Tracker
 
-Last updated: 2026-02-21
+Last updated: 2026-02-28
 Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
 
 ## 1) Current Snapshot
 
 ### Completed
+- Deployment-readiness hardening pass (2026-02-28):
+  - Added Alembic migration stack with initial schema migration.
+  - Switched backend default DB init strategy to migration-first (`DB_INIT_MODE=migrate`).
+  - Added CI workflow for backend tests + migration smoke + frontend build.
+  - Added deployment readiness runbook under `docs/deployment/DEPLOYMENT_READINESS.md`.
+  - Hardened source connectors with retry/backoff and explicit User-Agent.
 - Created new project folder outside old site repo.
 - Added root docs:
   - `README.md`
@@ -71,7 +77,6 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
 - Frontend dependency install not verified: `npm` not available in current environment.
 
 ### Pending (High Level)
-- Add Alembic migration stack (currently using `create_all` bootstrap).
 - Add robust PDF download+parser integration (current V1 uses source summaries/fulltext stubs for non-PDF sources).
 - Add production-grade connector hardening for X threads and unstable RSS feeds.
 - Add benchmark fixture population (`benchmarks/seed/*`) and precision scoring harness.
@@ -147,9 +152,9 @@ Exit criteria:
 
 ## WS-A Backend Platform
 Owner: Agent A
-Status: In progress (scaffold done)
+Status: In progress (migration + CI baseline complete)
 Tasks:
-- Add Alembic migration stack.
+- [x] Add Alembic migration stack.
 - Replace stub services with real repositories and transactions.
 - Add typed service errors and API error contracts.
 - Add scheduler wiring (APScheduler or separate worker).
@@ -220,10 +225,10 @@ Dependencies: tracker updates, export pipeline.
 
 ## 4) Immediate Next Actions (Recommended Order)
 
-1. Add Alembic migrations and pin initial schema version.
-2. Populate benchmark set and implement precision evaluator.
-3. Add PDF retrieval/parsing path for arXiv full text when needed.
-4. Validate frontend on machine with Node/npm and run end-to-end UI smoke.
+1. Populate benchmark set and implement precision evaluator.
+2. Add PDF retrieval/parsing path for arXiv full text when needed.
+3. Split scheduler into dedicated worker deployment mode and disable scheduler in API replicas.
+4. Add observability (structured logs + alerts) and production secret management.
 5. Start weekly publish loop using `BLOG_WORKFLOW.md` and the template draft.
 
 ## 5) Resume Checklist for Any Agent
@@ -249,7 +254,7 @@ Before handoff:
 
 - Multi-source connector reliability and dedupe quality are the main technical risks.
 - Docker daemon unavailable in this environment during validation.
-- Node/npm unavailable in this environment during frontend validation.
+- Python venv/pip tooling unavailable in this environment during backend runtime validation.
 - Inference runtime defaults are locked, but local model throughput/quality is not yet validated.
 - DB migrations are pending (schema bootstrap currently automatic).
 

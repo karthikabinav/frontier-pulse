@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional, Protocol
@@ -28,6 +29,22 @@ class SourceConnector(Protocol):
         ...
 
 
+def _request_with_retry(url: str, timeout: int = 60, retries: int = 3) -> httpx.Response:
+    headers = {"User-Agent": "aifrontierpulse/0.1 (+https://github.com/karthikabinav/frontier-pulse)"}
+    last_error: Exception | None = None
+    for attempt in range(retries):
+        try:
+            with httpx.Client(timeout=timeout, follow_redirects=True, headers=headers) as client:
+                response = client.get(url)
+                response.raise_for_status()
+                return response
+        except Exception as exc:  # pragma: no cover - network branch
+            last_error = exc
+            if attempt < retries - 1:
+                time.sleep(2**attempt)
+    raise RuntimeError(f"Failed after retries: {url}") from last_error
+
+
 class ArxivConnector:
     namespace = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
 
@@ -37,11 +54,10 @@ class ArxivConnector:
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
         query = "+OR+".join([f"cat:{cat}" for cat in self.categories])
         url = (
-            "http://export.arxiv.org/api/query"
+            "https://export.arxiv.org/api/query"
             f"?search_query={query}&sortBy=lastUpdatedDate&sortOrder=descending&start=0&max_results={max_items}"
         )
-        response = httpx.get(url, timeout=60, follow_redirects=True)
-        response.raise_for_status()
+        response = _request_with_retry(url)
         root = ElementTree.fromstring(response.text)
         docs: list[SourceDocument] = []
 
@@ -57,11 +73,6 @@ class ArxivConnector:
                 name = author_node.findtext("atom:name", default="", namespaces=self.namespace)
                 if name:
                     authors.append(name.strip())
-
-            arxiv_primary = None
-            primary_node = entry.find("arxiv:primary_category", self.namespace)
-            if primary_node is not None:
-                arxiv_primary = primary_node.attrib.get("term")
 
             pdf_url = ""
             for link in entry.findall("atom:link", self.namespace):
@@ -99,11 +110,7 @@ class RSSConnector:
                 summary = getattr(entry, "summary", "").strip()
                 link = getattr(entry, "link", "")
                 published_parsed = getattr(entry, "published_parsed", None)
-                published = (
-                    datetime(*published_parsed[:6], tzinfo=timezone.utc)
-                    if published_parsed
-                    else datetime.now(timezone.utc)
-                )
+                published = datetime(*published_parsed[:6], tzinfo=timezone.utc) if published_parsed else datetime.now(timezone.utc)
                 source_id = f"{self.source}:{link or title}"
                 docs.append(
                     SourceDocument(
@@ -124,21 +131,19 @@ class RSSConnector:
 
 
 class OpenReviewConnector:
+    def __init__(self, venue_id: str = "ICLR.cc/2026/Conference") -> None:
+        self.venue_id = venue_id
+
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
-        url = "https://api2.openreview.net/notes?content.venueid=ICLR.cc/2026/Conference&limit=50"
-        response = httpx.get(url, timeout=60, follow_redirects=True)
-        response.raise_for_status()
+        url = f"https://api2.openreview.net/notes?content.venueid={self.venue_id}&limit={max_items}"
+        response = _request_with_retry(url)
         data = response.json()
         notes = data.get("notes", [])
         docs: list[SourceDocument] = []
         for note in notes[:max_items]:
             content = note.get("content", {})
             title = content.get("title", {}).get("value", "") if isinstance(content.get("title"), dict) else content.get("title", "")
-            abstract = (
-                content.get("abstract", {}).get("value", "")
-                if isinstance(content.get("abstract"), dict)
-                else content.get("abstract", "")
-            )
+            abstract = content.get("abstract", {}).get("value", "") if isinstance(content.get("abstract"), dict) else content.get("abstract", "")
             note_id = note.get("id", "")
             docs.append(
                 SourceDocument(
@@ -161,6 +166,7 @@ def default_rss_sources() -> dict[str, list[str]]:
         "frontier_blogs": [
             "https://www.anthropic.com/news/rss.xml",
             "https://openai.com/news/rss.xml",
+            "https://www.deepmind.com/blog/rss.xml",
         ],
         "reddit": [
             "https://www.reddit.com/r/MachineLearning/.rss",
@@ -168,9 +174,8 @@ def default_rss_sources() -> dict[str, list[str]]:
         ],
         "university_blogs": [
             "https://bair.berkeley.edu/blog/feed.xml",
-            "https://ai.stanford.edu/blog/feed.xml",
             "https://news.mit.edu/rss/topic/artificial-intelligence2",
         ],
-        # X API requires auth; placeholder feed list can be swapped later.
+        # X official API needs auth; keep this extensible for future connector.
         "x_threads": [],
     }
