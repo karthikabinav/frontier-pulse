@@ -196,7 +196,11 @@ class DefaultWorkflowService(WorkflowService):
     def _connectors(self, sources: list[str]) -> dict[str, object]:
         rss = default_rss_sources()
         mapping: dict[str, object] = {
-            "arxiv": ArxivConnector(settings.arxiv_categories_list),
+            "arxiv": ArxivConnector(
+                settings.arxiv_categories_list,
+                parser_primary=settings.pdf_parser_primary,
+                parser_fallback=settings.pdf_parser_fallback,
+            ),
             "openreview": OpenReviewConnector(),
             "frontier_blogs": RSSConnector("frontier_blogs", rss["frontier_blogs"]),
             "reddit": RSSConnector("reddit", rss["reddit"]),

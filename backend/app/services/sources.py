@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -45,11 +46,64 @@ def _request_with_retry(url: str, timeout: int = 60, retries: int = 3) -> httpx.
     raise RuntimeError(f"Failed after retries: {url}") from last_error
 
 
+def _extract_pdf_text(pdf_bytes: bytes, parser_primary: str = "pymupdf", parser_fallback: str = "pdfminer") -> str:
+    def parse_with_pymupdf(data: bytes) -> str:
+        import fitz  # pymupdf
+
+        text_parts: list[str] = []
+        doc = fitz.open(stream=data, filetype="pdf")
+        try:
+            for page in doc:
+                text_parts.append(page.get_text("text") or "")
+        finally:
+            doc.close()
+        return "\n".join(text_parts)
+
+    def parse_with_pdfminer(data: bytes) -> str:
+        from pdfminer.high_level import extract_text
+
+        return extract_text(io.BytesIO(data)) or ""
+
+    parsers = [parser_primary, parser_fallback]
+    for parser_name in parsers:
+        try:
+            if parser_name == "pymupdf":
+                text = parse_with_pymupdf(pdf_bytes)
+            elif parser_name == "pdfminer":
+                text = parse_with_pdfminer(pdf_bytes)
+            else:
+                continue
+            cleaned = text.strip()
+            if cleaned:
+                return cleaned
+        except Exception:
+            continue
+    return ""
+
+
+def _extract_arxiv_full_text(pdf_url: str, fallback_text: str, parser_primary: str, parser_fallback: str) -> str:
+    if not pdf_url:
+        return fallback_text
+
+    try:
+        response = _request_with_retry(pdf_url, timeout=90, retries=3)
+        full_text = _extract_pdf_text(response.content, parser_primary=parser_primary, parser_fallback=parser_fallback)
+        if full_text:
+            # Keep reasonable size in DB while preserving substantial context.
+            return full_text[:250_000]
+    except Exception:
+        pass
+
+    return fallback_text
+
+
 class ArxivConnector:
     namespace = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
 
-    def __init__(self, categories: list[str]) -> None:
+    def __init__(self, categories: list[str], parser_primary: str = "pymupdf", parser_fallback: str = "pdfminer") -> None:
         self.categories = categories
+        self.parser_primary = parser_primary
+        self.parser_fallback = parser_fallback
 
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
         query = "+OR+".join([f"cat:{cat}" for cat in self.categories])
@@ -79,6 +133,14 @@ class ArxivConnector:
                 if link.attrib.get("title") == "pdf":
                     pdf_url = link.attrib.get("href", "")
 
+            fallback_text = f"{title}\n\n{abstract}"
+            full_text = _extract_arxiv_full_text(
+                pdf_url,
+                fallback_text,
+                parser_primary=self.parser_primary,
+                parser_fallback=self.parser_fallback,
+            )
+
             docs.append(
                 SourceDocument(
                     source="arxiv",
@@ -86,7 +148,7 @@ class ArxivConnector:
                     title=title,
                     authors=", ".join(authors),
                     abstract=abstract,
-                    full_text=f"{title}\n\n{abstract}",
+                    full_text=full_text,
                     published_at=datetime.fromisoformat(published.replace("Z", "+00:00")),
                     updated_at=datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else None,
                     source_url=pdf_url or entry_id,
