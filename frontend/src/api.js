@@ -14,12 +14,21 @@ async function request(path, options = {}) {
 
 export const api = {
   health: () => request("/health"),
+  diagnostics: () => request("/diagnostics"),
   runWeekly: () => request("/workflows/weekly-run", { method: "POST", body: JSON.stringify({}) }),
   ingestionPolicy: () => request("/workflows/ingestion-policy"),
   inferencePolicy: () => request("/workflows/inference-policy"),
   projectPolicy: () => request("/workflows/project-policy"),
   papers: () => request("/papers?limit=50"),
   hypotheses: () => request("/hypotheses"),
+  memory: (params = {}) => {
+    const q = new URLSearchParams();
+    if (params.week_key) q.set("week_key", params.week_key);
+    if (params.memory_type) q.set("memory_type", params.memory_type);
+    if (params.limit) q.set("limit", String(params.limit));
+    const suffix = q.toString() ? `?${q.toString()}` : "";
+    return request(`/memory${suffix}`);
+  },
   clusters: () => request("/clusters"),
   latestBrief: () => request("/briefs/latest"),
   updateBrief: (payload) => request("/briefs/update", { method: "POST", body: JSON.stringify(payload) }),

@@ -3,10 +3,13 @@ import { api } from "./api";
 
 function App() {
   const [health, setHealth] = useState(null);
+  const [diagnostics, setDiagnostics] = useState(null);
   const [policies, setPolicies] = useState(null);
   const [papers, setPapers] = useState([]);
   const [hypotheses, setHypotheses] = useState([]);
   const [clusters, setClusters] = useState([]);
+  const [memoryEntries, setMemoryEntries] = useState([]);
+  const [memoryTypeFilter, setMemoryTypeFilter] = useState("");
   const [qa, setQa] = useState([]);
   const [brief, setBrief] = useState(null);
   const [editorValue, setEditorValue] = useState("");
@@ -21,23 +24,40 @@ function App() {
     return `${now.getFullYear()}-W${String(week).padStart(2, "0")}`;
   }, []);
 
+  async function loadMemory(filter = memoryTypeFilter) {
+    const entries = await api.memory({ memory_type: filter || undefined, limit: 100 });
+    setMemoryEntries(entries);
+  }
+
   async function loadAll() {
     setStatus("Loading data...");
     try {
-      const [healthRes, ingestion, inference, project, paperList, hypList, clusterList, latestBrief, qaList] =
-        await Promise.all([
-          api.health(),
-          api.ingestionPolicy(),
-          api.inferencePolicy(),
-          api.projectPolicy(),
-          api.papers(),
-          api.hypotheses(),
-          api.clusters(),
-          api.latestBrief(),
-          api.qaChecklist(),
-        ]);
+      const [
+        healthRes,
+        diagnosticsRes,
+        ingestion,
+        inference,
+        project,
+        paperList,
+        hypList,
+        clusterList,
+        latestBrief,
+        qaList,
+      ] = await Promise.all([
+        api.health(),
+        api.diagnostics(),
+        api.ingestionPolicy(),
+        api.inferencePolicy(),
+        api.projectPolicy(),
+        api.papers(),
+        api.hypotheses(),
+        api.clusters(),
+        api.latestBrief(),
+        api.qaChecklist(),
+      ]);
 
       setHealth(healthRes);
+      setDiagnostics(diagnosticsRes);
       setPolicies({ ingestion, inference, project });
       setPapers(paperList);
       setHypotheses(hypList);
@@ -45,6 +65,7 @@ function App() {
       setBrief(latestBrief);
       setEditorValue(latestBrief?.markdown_content ?? "");
       setQa(qaList.checklist || []);
+      await loadMemory(memoryTypeFilter);
       setStatus("Ready");
     } catch (err) {
       setStatus(`Load failed: ${err.message}`);
@@ -92,6 +113,17 @@ function App() {
     }
   }
 
+  async function applyMemoryFilter(nextFilter) {
+    setMemoryTypeFilter(nextFilter);
+    try {
+      setStatus("Loading memory...");
+      await loadMemory(nextFilter);
+      setStatus("Ready");
+    } catch (err) {
+      setStatus(`Memory load failed: ${err.message}`);
+    }
+  }
+
   function copyText(text) {
     navigator.clipboard.writeText(text);
     setStatus("Copied to clipboard.");
@@ -125,12 +157,13 @@ function App() {
       <header className="topbar">
         <div>
           <h1>aifrontierpulse V1</h1>
-          <p className="sub">Automated AI researcher workbench (local-first)</p>
+          <p className="sub">Literature-survey foundation for an automated AI researcher</p>
         </div>
         <div className="actions">
           <button onClick={runWeekly}>Run Weekly (Ctrl/Cmd+R)</button>
           <button onClick={saveBrief}>Save Brief (Ctrl/Cmd+S)</button>
           <button onClick={generateExports}>Generate Exports (Ctrl/Cmd+E)</button>
+          <button onClick={loadAll}>Refresh</button>
         </div>
       </header>
 
@@ -138,21 +171,55 @@ function App() {
 
       <section className="grid two">
         <article className="panel">
-          <h2>System Status</h2>
+          <h2>System & Diagnostics</h2>
           <p>API: {health ? "healthy" : "unknown"}</p>
-          <p>Timestamp: {health?.timestamp || "-"}</p>
-          <p>Papers: {papers.length}</p>
-          <p>Hypotheses: {hypotheses.length}</p>
-          <p>Clusters: {clusters.length}</p>
-          <p>Brief version: {brief?.version_number || 0}</p>
+          <p>DB: {diagnostics?.db_ok ? "connected" : "unknown"}</p>
+          <p>Scheduler mode: {diagnostics?.scheduler_mode || "-"}</p>
+          <p>Latest week: {diagnostics?.latest_week_key || "-"}</p>
+          <p>Last run: {diagnostics?.last_run_completed_at || "-"}</p>
+          <p>Last run notes: {diagnostics?.last_run_notes || "-"}</p>
         </article>
 
+        <article className="panel">
+          <h2>Accumulation Snapshot</h2>
+          <p>Papers: {diagnostics?.paper_count ?? papers.length}</p>
+          <p>Alpha cards: {diagnostics?.alpha_card_count ?? 0}</p>
+          <p>Hypotheses: {diagnostics?.hypothesis_count ?? hypotheses.length}</p>
+          <p>Clusters: {diagnostics?.cluster_count ?? clusters.length}</p>
+          <p>Memory total: {diagnostics?.memory_total_count ?? 0}</p>
+          <p>Memory hypotheses: {diagnostics?.memory_hypothesis_count ?? 0}</p>
+          <p>Memory alpha nuggets: {diagnostics?.memory_alpha_nugget_count ?? 0}</p>
+          <p>Memory weekly synthesis: {diagnostics?.memory_weekly_synthesis_count ?? 0}</p>
+        </article>
+      </section>
+
+      <section className="grid two">
         <article className="panel">
           <h2>Policy Snapshot</h2>
           <p>Sources: {policies?.ingestion?.sources?.join(", ") || "-"}</p>
           <p>LLM: {policies?.inference?.llm_model || "-"}</p>
           <p>Embeddings: {policies?.project?.embedding_model || "-"}</p>
-          <p>Scheduler: {policies?.project?.scheduler_mode || "-"}</p>
+          <p>Topic bias: {policies?.ingestion?.topic_bias_enabled ? "enabled" : "disabled"}</p>
+          <p>Topic keywords: {(policies?.ingestion?.topic_bias_keywords || []).slice(0, 6).join(", ")}...</p>
+        </article>
+
+        <article className="panel">
+          <h2>Memory Browser</h2>
+          <div className="actions">
+            <button onClick={() => applyMemoryFilter("")}>All</button>
+            <button onClick={() => applyMemoryFilter("hypothesis")}>Hypotheses</button>
+            <button onClick={() => applyMemoryFilter("alpha_nugget")}>Alpha nuggets</button>
+            <button onClick={() => applyMemoryFilter("weekly_synthesis")}>Weekly synthesis</button>
+          </div>
+          <ul className="rows">
+            {memoryEntries.slice(0, 12).map((m) => (
+              <li key={m.memory_key}>
+                <strong>{m.memory_type} • {m.source_week}</strong>
+                <span>{m.title}</span>
+                <span>{m.summary.slice(0, 180)}...</span>
+              </li>
+            ))}
+          </ul>
         </article>
       </section>
 
@@ -187,7 +254,7 @@ function App() {
       </section>
 
       <section className="panel">
-        <h2>Alpha Notes Editor</h2>
+        <h2>Weekly Brief Editor</h2>
         <textarea value={editorValue} onChange={(e) => setEditorValue(e.target.value)} rows={16} />
       </section>
 
