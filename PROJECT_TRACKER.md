@@ -12,6 +12,7 @@ Project path: `/Users/karthikabinav/kabinav/frontier-pulse`
   - Added CI workflow for backend tests + migration smoke + frontend build.
   - Added deployment readiness runbook under `docs/deployment/DEPLOYMENT_READINESS.md`.
   - Hardened source connectors with retry/backoff and explicit User-Agent.
+- Implemented arXiv PDF full-text ingestion path with parser fallback (`pymupdf` -> `pdfminer`) and safe fallback to abstract text.
 - Created new project folder outside old site repo.
 - Added root docs:
   - `README.md`
