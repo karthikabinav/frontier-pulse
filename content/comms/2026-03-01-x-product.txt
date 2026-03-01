@@ -1,0 +1,13 @@
+AI product takeaway this week:
+
+Ship bounded-depth reliability before deep autonomy.
+
+What works now:
+- deterministic tool schemas
+- strict retries/fallbacks
+- recovery-first orchestration
+- confidence-aware routing
+
+Reliable 3-step workflows beat brittle 12-step demos.
+
+Distribution + procurement fit + infra access are becoming as important as model quality itself.

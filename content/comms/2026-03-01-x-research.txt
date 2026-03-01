@@ -1,0 +1,12 @@
+Frontier signal this week (research lens):
+
+1) The center of gravity is shifting from pretraining scale to post-training system quality.
+2) Tacit-skill supervision is the bottleneck for robust reasoning transfer.
+3) Benchmark gains without long-horizon tool reliability are fragile.
+
+Practical priority:
+- optimize eval loops for multi-step tool reliability,
+- measure recovery after early errors,
+- invest in targeted synthetic+human supervision.
+
+If your agent fails after 3–4 tool calls, your benchmark curve is not your moat.

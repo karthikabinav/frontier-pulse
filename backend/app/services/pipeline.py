@@ -642,15 +642,30 @@ class DefaultAnalysisService(AnalysisService):
         db: Session,
         week_key: Optional[str] = None,
         memory_type: Optional[str] = None,
+        query: Optional[str] = None,
+        recent_weeks: Optional[int] = None,
         limit: int = 100,
     ) -> list[MemoryEntryOut]:
-        query = select(ResearchMemoryEntry)
+        stmt = select(ResearchMemoryEntry)
         if week_key:
-            query = query.where(ResearchMemoryEntry.source_week == week_key)
+            stmt = stmt.where(ResearchMemoryEntry.source_week == week_key)
         if memory_type:
-            query = query.where(ResearchMemoryEntry.memory_type == memory_type)
+            stmt = stmt.where(ResearchMemoryEntry.memory_type == memory_type)
+        if recent_weeks:
+            recent = db.scalars(
+                select(ResearchBrief.week_key).order_by(desc(ResearchBrief.week_key)).limit(recent_weeks)
+            ).all()
+            if recent:
+                stmt = stmt.where(ResearchMemoryEntry.source_week.in_(recent))
+        if query:
+            q = f"%{query.lower()}%"
+            stmt = stmt.where(
+                func.lower(ResearchMemoryEntry.title).like(q)
+                | func.lower(ResearchMemoryEntry.summary).like(q)
+                | func.lower(ResearchMemoryEntry.provenance).like(q)
+            )
 
-        rows = db.scalars(query.order_by(desc(ResearchMemoryEntry.updated_at)).limit(limit)).all()
+        rows = db.scalars(stmt.order_by(desc(ResearchMemoryEntry.updated_at)).limit(limit)).all()
         return [
             MemoryEntryOut(
                 id=row.id,
@@ -731,6 +746,16 @@ class DefaultExportService(ExportService):
             return text
         return text.replace("/Users/", "~/")
 
+    def _extract_bullets(self, markdown: str, max_items: int = 5) -> list[str]:
+        bullets: list[str] = []
+        for line in markdown.splitlines():
+            t = line.strip()
+            if t.startswith("- "):
+                bullets.append(t[2:].strip())
+            if len(bullets) >= max_items:
+                break
+        return bullets
+
     def _to_twitter_thread(self, markdown: str) -> str:
         lines = [line.strip() for line in markdown.splitlines() if line.strip()]
         tweets: list[str] = []
@@ -750,6 +775,58 @@ class DefaultExportService(ExportService):
         intro = "Building aifrontierpulse in public: this week’s frontier AI research signal."
         return f"{intro}\n\n{markdown[:2800]}"
 
+    def _x_research(self, markdown: str) -> str:
+        bullets = self._extract_bullets(markdown, max_items=4)
+        body = "\n".join([f"- {b}" for b in bullets]) if bullets else "- Post-training and eval loops are now the core differentiation layer."
+        return (
+            "Frontier pulse (research lens):\n"
+            "1) Post-training + agent orchestration are outpacing pure pretraining deltas.\n"
+            "2) Tacit-skill supervision is the bottleneck for robust reasoning transfer.\n"
+            "3) Benchmark gains without long-horizon tool reliability are fragile.\n\n"
+            f"Signals:\n{body}\n\n"
+            "Action: prioritize long-horizon evals, failure-recovery metrics, and targeted tacit supervision."
+        )
+
+    def _x_product(self, markdown: str) -> str:
+        return (
+            "AI product takeaway this week:\n"
+            "Ship bounded-depth agent workflows before chasing full autonomy.\n"
+            "Deterministic tool schemas + recovery orchestration beat flashy demos.\n"
+            "Treat policy/procurement constraints as product requirements, not legal afterthoughts.\n\n"
+            "Reliable 3-step agents > brittle 12-step agents."
+        )
+
+    def _linkedin_research(self, markdown: str) -> str:
+        return (
+            "Research POV: the center of gravity has shifted from pretraining scale to post-training systems quality.\n\n"
+            "In practice, this means: \n"
+            "• stronger long-horizon tool-use evals\n"
+            "• targeted tacit-skill supervision\n"
+            "• explicit uncertainty and failure-recovery tracking\n\n"
+            "Teams that operationalize these loops will compound faster than teams optimizing benchmark deltas in isolation."
+        )
+
+    def _linkedin_product(self, markdown: str) -> str:
+        return (
+            "Product POV: most agent failures are still orchestration failures, not base-model failures.\n\n"
+            "What works now:\n"
+            "• bounded workflow depth\n"
+            "• strict tool contracts\n"
+            "• retries + fallback routing\n"
+            "• recovery-first UX\n\n"
+            "Practical reliability wins customers before autonomy depth does."
+        )
+
+    def _linkedin_vc(self, markdown: str) -> str:
+        return (
+            "VC POV: moat formation is increasingly tri-factor — model capability, distribution rights, and infrastructure access.\n\n"
+            "Near-term diligence questions:\n"
+            "• Is post-training/eval IP compounding?\n"
+            "• Can the team ship reliable multi-step agents?\n"
+            "• Do procurement/policy constraints help or block GTM?\n\n"
+            "Expect value capture to concentrate in teams that combine technical depth with deployment advantage."
+        )
+
     def generate(self, db: Session, payload: ExportRequest) -> ExportResponse:
         brief_version = db.get(ResearchBriefVersion, payload.brief_version_id)
         if not brief_version:
@@ -763,6 +840,16 @@ class DefaultExportService(ExportService):
                 content = self._to_twitter_thread(markdown)
             elif platform == "linkedin":
                 content = self._to_linkedin(markdown)
+            elif platform == "x_research":
+                content = self._x_research(markdown)
+            elif platform == "x_product":
+                content = self._x_product(markdown)
+            elif platform == "linkedin_research":
+                content = self._linkedin_research(markdown)
+            elif platform == "linkedin_product":
+                content = self._linkedin_product(markdown)
+            elif platform == "linkedin_vc":
+                content = self._linkedin_vc(markdown)
             else:
                 content = markdown
             items.append(ExportItem(platform=platform, content=content))

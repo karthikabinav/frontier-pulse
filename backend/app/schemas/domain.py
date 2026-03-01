@@ -148,9 +148,18 @@ class BriefUpdateRequest(BaseModel):
 
 class ExportRequest(BaseModel):
     brief_version_id: int
-    include_platforms: list[Literal["twitter", "linkedin", "markdown"]] = Field(
-        default_factory=lambda: ["twitter", "linkedin", "markdown"]
-    )
+    include_platforms: list[
+        Literal[
+            "twitter",
+            "linkedin",
+            "markdown",
+            "x_research",
+            "x_product",
+            "linkedin_research",
+            "linkedin_product",
+            "linkedin_vc",
+        ]
+    ] = Field(default_factory=lambda: ["twitter", "linkedin", "markdown"])
 
 
 class ExportItem(BaseModel):

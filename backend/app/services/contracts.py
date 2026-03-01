@@ -66,6 +66,8 @@ class AnalysisService(ABC):
         db: Session,
         week_key: Optional[str] = None,
         memory_type: Optional[str] = None,
+        query: Optional[str] = None,
+        recent_weeks: Optional[int] = None,
         limit: int = 100,
     ) -> list[MemoryEntryOut]:
         raise NotImplementedError
