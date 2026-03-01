@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import Counter
 from datetime import datetime, timezone
 import hashlib
+import json
+from pathlib import Path
 from typing import Optional
 
 from sqlalchemy import delete, desc, func, select
@@ -181,6 +183,32 @@ def _derive_long_horizon_insights(db: Session, current_week_key: str, lookback: 
         f"the dominant hypothesis types are: {top_mechanisms}. "
         f"Most persistent bottlenecks are: {top_bottlenecks}."
     )
+
+
+def _is_full_text_processed(p: Paper) -> bool:
+    fallback = f"{p.title}\n\n{p.abstract}".strip()
+    return bool((p.full_text or "").strip()) and (p.full_text or "").strip() != fallback
+
+
+def _write_verification_artifacts(week_key: str, payload: dict) -> None:
+    root = Path(__file__).resolve().parents[2] / "artifacts" / "verification"
+    root.mkdir(parents=True, exist_ok=True)
+    json_path = root / f"{week_key}.json"
+    md_path = root / f"{week_key}.md"
+    json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+    md = [
+        f"# Verification Report ({week_key})",
+        "",
+        f"- arxiv_discovered_count: {payload['arxiv_discovered_count']}",
+        f"- arxiv_new_processed_count: {payload['arxiv_new_processed_count']}",
+        f"- full_text_success_count: {payload['full_text_success_count']}",
+        f"- abstract_only_count: {payload['abstract_only_count']}",
+        f"- failed_count: {payload['failed_count']}",
+        f"- full_text_coverage: {payload['full_text_coverage']:.3f}",
+        f"- processed_coverage: {payload['processed_coverage']:.3f}",
+    ]
+    md_path.write_text("\n".join(md) + "\n", encoding="utf-8")
 
 
 def _render_brief(
@@ -409,10 +437,44 @@ class DefaultWorkflowService(WorkflowService):
         topic_matches = sum(1 for d in prioritized_docs if self._topic_score(d) > 0)
 
         papers_added: list[Paper] = []
+        dedupe_skipped = 0
         for doc in prioritized_docs:
             if self._dedupe_exists(db, doc):
+                dedupe_skipped += 1
                 continue
             papers_added.append(self._store_paper(db, doc))
+
+        # Verification payload for arXiv coverage
+        arxiv_discovered_docs = [d for d in prioritized_docs if d.source == "arxiv"]
+        arxiv_discovered_ids = [d.arxiv_id or d.source_id for d in arxiv_discovered_docs]
+        arxiv_new_papers = [p for p in papers_added if p.source == "arxiv"]
+        full_text_success = [p for p in arxiv_new_papers if _is_full_text_processed(p)]
+        abstract_only = [p for p in arxiv_new_papers if not _is_full_text_processed(p)]
+
+        discovered_count = len(arxiv_discovered_docs)
+        processed_count = len(arxiv_new_papers)
+        failed_count = max(0, discovered_count - processed_count)
+        full_text_coverage = (len(full_text_success) / discovered_count) if discovered_count else 0.0
+        processed_coverage = (processed_count / discovered_count) if discovered_count else 0.0
+
+        verification_payload = {
+            "week_key": week_key,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "arxiv_discovered_count": discovered_count,
+            "arxiv_discovered_ids": arxiv_discovered_ids,
+            "arxiv_new_processed_count": processed_count,
+            "arxiv_new_processed_ids": [p.arxiv_id or p.source_id for p in arxiv_new_papers],
+            "full_text_success_count": len(full_text_success),
+            "full_text_success_ids": [p.arxiv_id or p.source_id for p in full_text_success],
+            "abstract_only_count": len(abstract_only),
+            "abstract_only_ids": [p.arxiv_id or p.source_id for p in abstract_only],
+            "failed_count": failed_count,
+            "failed_ids": arxiv_discovered_ids[processed_count:],
+            "dedupe_skipped_total": dedupe_skipped,
+            "full_text_coverage": full_text_coverage,
+            "processed_coverage": processed_coverage,
+        }
+        _write_verification_artifacts(week_key, verification_payload)
 
         alpha_cards = [self._extract_alpha(db, paper) for paper in papers_added]
 
@@ -510,7 +572,8 @@ class DefaultWorkflowService(WorkflowService):
         run.completed_at = datetime.now(timezone.utc)
         error_suffix = f" errors={'; '.join(source_errors[:3])}" if source_errors else ""
         run.notes = (
-            f"ingested={len(papers_added)} topic_matched={topic_matches} hypotheses={len(hypotheses)} clusters={len(clusters)}{error_suffix}"
+            f"ingested={len(papers_added)} topic_matched={topic_matches} hypotheses={len(hypotheses)} clusters={len(clusters)} "
+            f"arxiv_fulltext_coverage={full_text_coverage:.2f} arxiv_processed_coverage={processed_coverage:.2f}{error_suffix}"
         )
         db.commit()
 

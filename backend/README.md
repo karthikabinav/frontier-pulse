@@ -50,6 +50,14 @@ Defaults to `2:00 AM` in `America/Los_Angeles`.
 
 For production, prefer `SCHEDULER_MODE=off` in API replicas and run scheduler as a single dedicated worker process.
 
+## Verification artifacts
+
+Each weekly run writes arXiv coverage verification artifacts:
+- `artifacts/verification/<week_key>.json`
+- `artifacts/verification/<week_key>.md`
+
+Includes discovered IDs, processed IDs, full-text coverage, abstract-only fallbacks, and failed count.
+
 ## Backups
 
 ```bash
