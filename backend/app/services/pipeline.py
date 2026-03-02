@@ -225,11 +225,15 @@ def _render_brief(
     arxiv_papers = [p for p in papers if p.source == "arxiv"]
     arxiv_papers = sorted(arxiv_papers, key=lambda p: p.published_at, reverse=True)
     arxiv_lines = []
+    citation_lines = []
     for p in arxiv_papers[:10]:
         first = (p.abstract or "").split(".")[0].strip()
         inc = first[:220] + ("..." if len(first) > 220 else "")
-        arxiv_lines.append(f"- {p.arxiv_id or p.source_id}: {p.title} — {inc}")
+        aid = p.arxiv_id or p.source_id
+        arxiv_lines.append(f"- {aid}: {p.title} — {inc}")
+        citation_lines.append(f"- {aid}: {p.source_url}")
     arxiv_section = "\n".join(arxiv_lines) if arxiv_lines else "- none"
+    citation_section = "\n".join(citation_lines) if citation_lines else "- none"
 
     return f"""# aifrontierpulse Weekly Brief ({week_key})
 
@@ -240,6 +244,9 @@ def _render_brief(
 
 ## New arXiv papers (recent window)
 {arxiv_section}
+
+## Citations (evidence links)
+{citation_section}
 
 ## Dominant Bottleneck
 - {cards[0].bottleneck_attacked if cards else 'N/A'}
