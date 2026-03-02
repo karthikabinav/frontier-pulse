@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     default_max_papers: int = 0
     ingest_sources: str = "arxiv,openreview,frontier_blogs,x_threads,reddit,university_blogs"
     arxiv_categories: str = "cs.CL,cs.LG,stat.ML,cs.AI,cs.DS,cs.GT,cs.MA"
+    arxiv_recent_hours: int = 24
     include_revised_papers: bool = True
     dedupe_strategy: str = "fuzzy_title_abstract"
     pdf_parser_primary: str = "pymupdf"

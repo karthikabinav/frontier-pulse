@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import time
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Protocol
 from xml.etree import ElementTree
 
@@ -100,10 +100,17 @@ def _extract_arxiv_full_text(pdf_url: str, fallback_text: str, parser_primary: s
 class ArxivConnector:
     namespace = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
 
-    def __init__(self, categories: list[str], parser_primary: str = "pymupdf", parser_fallback: str = "pdfminer") -> None:
+    def __init__(
+        self,
+        categories: list[str],
+        parser_primary: str = "pymupdf",
+        parser_fallback: str = "pdfminer",
+        recent_hours: int = 24,
+    ) -> None:
         self.categories = categories
         self.parser_primary = parser_primary
         self.parser_fallback = parser_fallback
+        self.recent_hours = recent_hours
 
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
         query = "+OR+".join([f"cat:{cat}" for cat in self.categories])
@@ -114,6 +121,8 @@ class ArxivConnector:
         response = _request_with_retry(url)
         root = ElementTree.fromstring(response.text)
         docs: list[SourceDocument] = []
+
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, self.recent_hours))
 
         for entry in root.findall("atom:entry", self.namespace):
             title = (entry.findtext("atom:title", default="", namespaces=self.namespace) or "").strip()
@@ -133,6 +142,10 @@ class ArxivConnector:
                 if link.attrib.get("title") == "pdf":
                     pdf_url = link.attrib.get("href", "")
 
+            published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
+            if published_at < cutoff:
+                continue
+
             fallback_text = f"{title}\n\n{abstract}"
             full_text = _extract_arxiv_full_text(
                 pdf_url,
@@ -149,7 +162,7 @@ class ArxivConnector:
                     authors=", ".join(authors),
                     abstract=abstract,
                     full_text=full_text,
-                    published_at=datetime.fromisoformat(published.replace("Z", "+00:00")),
+                    published_at=published_at,
                     updated_at=datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else None,
                     source_url=pdf_url or entry_id,
                     arxiv_id=entry_id.split("/")[-1],

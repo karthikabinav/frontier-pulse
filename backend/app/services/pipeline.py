@@ -222,12 +222,24 @@ def _render_brief(
     source_lines = "\n".join([f"- {k}: {v}" for k, v in sorted(count_by_source.items())]) or "- none"
     top_hyp = hyps[0].text if hyps else "No hypotheses generated yet."
 
+    arxiv_papers = [p for p in papers if p.source == "arxiv"]
+    arxiv_papers = sorted(arxiv_papers, key=lambda p: p.published_at, reverse=True)
+    arxiv_lines = []
+    for p in arxiv_papers[:10]:
+        first = (p.abstract or "").split(".")[0].strip()
+        inc = first[:220] + ("..." if len(first) > 220 else "")
+        arxiv_lines.append(f"- {p.arxiv_id or p.source_id}: {p.title} — {inc}")
+    arxiv_section = "\n".join(arxiv_lines) if arxiv_lines else "- none"
+
     return f"""# aifrontierpulse Weekly Brief ({week_key})
 
 ## Field Temperature
 - Total ingested artifacts: {len(papers)}
 - Source distribution:
 {source_lines}
+
+## New arXiv papers (recent window)
+{arxiv_section}
 
 ## Dominant Bottleneck
 - {cards[0].bottleneck_attacked if cards else 'N/A'}
@@ -293,6 +305,7 @@ class DefaultWorkflowService(WorkflowService):
                 settings.arxiv_categories_list,
                 parser_primary=settings.pdf_parser_primary,
                 parser_fallback=settings.pdf_parser_fallback,
+                recent_hours=settings.arxiv_recent_hours,
             ),
             "openreview": OpenReviewConnector(),
             "frontier_blogs": RSSConnector("frontier_blogs", rss["frontier_blogs"]),
