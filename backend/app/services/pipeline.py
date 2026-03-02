@@ -350,6 +350,9 @@ class DefaultWorkflowService(WorkflowService):
             ),
             reverse=True,
         )
+        if settings.topic_bias_enabled:
+            # For arXiv, enforce relevance floor so nightly stays focused on preferred areas
+            ranked = [d for d in ranked if (d.source != "arxiv" or self._topic_score(d) >= settings.topic_bias_min_score)]
         if max_items > 0:
             return ranked[:max_items]
         return ranked
@@ -449,7 +452,7 @@ class DefaultWorkflowService(WorkflowService):
                 source_errors.append(f"{source}:{exc}")
 
         prioritized_docs = self._prioritize_docs(docs, max_items=max_items)
-        topic_matches = sum(1 for d in prioritized_docs if self._topic_score(d) > 0)
+        topic_matches = sum(1 for d in prioritized_docs if self._topic_score(d) >= settings.topic_bias_min_score)
 
         papers_added: list[Paper] = []
         dedupe_skipped = 0
@@ -587,7 +590,8 @@ class DefaultWorkflowService(WorkflowService):
         run.completed_at = datetime.now(timezone.utc)
         error_suffix = f" errors={'; '.join(source_errors[:3])}" if source_errors else ""
         run.notes = (
-            f"ingested={len(papers_added)} topic_matched={topic_matches} hypotheses={len(hypotheses)} clusters={len(clusters)} "
+            f"ingested={len(papers_added)} topic_matched={topic_matches} min_topic_score={settings.topic_bias_min_score} "
+            f"hypotheses={len(hypotheses)} clusters={len(clusters)} "
             f"arxiv_fulltext_coverage={full_text_coverage:.2f} arxiv_processed_coverage={processed_coverage:.2f}{error_suffix}"
         )
         db.commit()

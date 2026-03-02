@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     chunk_overlap_tokens: int = 150
     semantic_sectioning: bool = True
     topic_bias_enabled: bool = True
+    topic_bias_min_score: int = 1
     topic_bias_keywords: str = (
         "llm post-training,reinforcement learning,rlhf,agentic systems,tool learning,"
         "adaptive reasoning,inference-time optimization,parallel scaling,"
