@@ -106,11 +106,15 @@ class ArxivConnector:
         parser_primary: str = "pymupdf",
         parser_fallback: str = "pdfminer",
         recent_hours: int = 24,
+        auto_expand_on_empty: bool = True,
+        expand_hours: int = 96,
     ) -> None:
         self.categories = categories
         self.parser_primary = parser_primary
         self.parser_fallback = parser_fallback
         self.recent_hours = recent_hours
+        self.auto_expand_on_empty = auto_expand_on_empty
+        self.expand_hours = max(expand_hours, recent_hours)
 
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
         query = "+OR+".join([f"cat:{cat}" for cat in self.categories])
@@ -143,7 +147,9 @@ class ArxivConnector:
                     pdf_url = link.attrib.get("href", "")
 
             published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
-            if published_at < cutoff:
+            updated_at = datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else published_at
+            # arXiv daily freshness should key off updated_at (new + revised papers)
+            if updated_at < cutoff:
                 continue
 
             fallback_text = f"{title}\n\n{abstract}"
@@ -163,11 +169,23 @@ class ArxivConnector:
                     abstract=abstract,
                     full_text=full_text,
                     published_at=published_at,
-                    updated_at=datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else None,
+                    updated_at=updated_at,
                     source_url=pdf_url or entry_id,
                     arxiv_id=entry_id.split("/")[-1],
                 )
             )
+
+        if not docs and self.auto_expand_on_empty and self.expand_hours > self.recent_hours:
+            expanded = ArxivConnector(
+                self.categories,
+                parser_primary=self.parser_primary,
+                parser_fallback=self.parser_fallback,
+                recent_hours=self.expand_hours,
+                auto_expand_on_empty=False,
+                expand_hours=self.expand_hours,
+            )
+            return expanded.fetch(max_items=max_items)
+
         return docs
 
 

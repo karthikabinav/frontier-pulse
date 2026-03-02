@@ -306,6 +306,8 @@ class DefaultWorkflowService(WorkflowService):
                 parser_primary=settings.pdf_parser_primary,
                 parser_fallback=settings.pdf_parser_fallback,
                 recent_hours=settings.arxiv_recent_hours,
+                auto_expand_on_empty=settings.arxiv_auto_expand_on_empty,
+                expand_hours=settings.arxiv_expand_hours,
             ),
             "openreview": OpenReviewConnector(),
             "frontier_blogs": RSSConnector("frontier_blogs", rss["frontier_blogs"]),

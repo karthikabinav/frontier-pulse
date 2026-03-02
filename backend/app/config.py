@@ -13,6 +13,8 @@ class Settings(BaseSettings):
     ingest_sources: str = "arxiv,openreview,frontier_blogs,x_threads,reddit,university_blogs"
     arxiv_categories: str = "cs.CL,cs.LG,stat.ML,cs.AI,cs.DS,cs.GT,cs.MA"
     arxiv_recent_hours: int = 24
+    arxiv_auto_expand_on_empty: bool = True
+    arxiv_expand_hours: int = 96
     include_revised_papers: bool = True
     dedupe_strategy: str = "fuzzy_title_abstract"
     pdf_parser_primary: str = "pymupdf"
