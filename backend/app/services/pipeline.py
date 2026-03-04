@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime, timezone
+import re
 import hashlib
 import json
 from pathlib import Path
@@ -119,6 +120,19 @@ def _heuristic_alpha(doc: Paper, chunks: list[PaperChunk]) -> dict[str, str]:
         "short_alpha_summary": f"{doc.title}: {doc.abstract[:220]}",
         "provenance_snippets": snippet,
     }
+
+
+def _extract_json_object(text: str) -> Optional[dict]:
+    if not text:
+        return None
+    match = re.search(r"\{[\s\S]*\}", text)
+    if not match:
+        return None
+    try:
+        obj = json.loads(match.group(0))
+        return obj if isinstance(obj, dict) else None
+    except Exception:
+        return None
 
 
 def _build_hypotheses(alpha_cards: list[PaperAlphaCard], week_key: str) -> list[tuple[Hypothesis, list[tuple[int, str, float, str]]]]:
@@ -439,6 +453,43 @@ class DefaultWorkflowService(WorkflowService):
         db.flush()
         return card
 
+    def _extract_hypothesis_method_results(self, paper: Paper) -> dict[str, str]:
+        abstract = (paper.abstract or "").strip()
+        default_h = f"{paper.title}: proposes a potentially useful method that may improve agent/tool performance under specific conditions."
+        default_m = abstract[:500] if abstract else "Method details unavailable (abstract missing)."
+        default_r = "Results not confidently extractable from abstract alone."
+
+        prompt = (
+            "Read the title+abstract and return STRICT JSON with keys hypothesis, methods, results. "
+            "Keep each field concise, specific, and evidence-grounded. "
+            "Do not hallucinate numbers.\n\n"
+            f"Title: {paper.title}\n"
+            f"Abstract: {abstract[:3500]}"
+        )
+        try:
+            model_text = self.inference_client.generate(
+                InferenceRequest(prompt=prompt, model=settings.llm_synthesis_model, temperature=0.1)
+            ).text
+            parsed = _extract_json_object(model_text or "")
+            if parsed:
+                hypothesis = str(parsed.get("hypothesis") or default_h).strip()
+                methods = str(parsed.get("methods") or default_m).strip()
+                results = str(parsed.get("results") or default_r).strip()
+                return {
+                    "hypothesis": hypothesis[:1200],
+                    "methods": methods[:1800],
+                    "results": results[:1800],
+                }
+        except Exception:
+            pass
+
+        # deterministic fallback
+        return {
+            "hypothesis": default_h[:1200],
+            "methods": default_m[:1800],
+            "results": default_r[:1800],
+        }
+
     def run_weekly(self, db: Session, payload: WorkflowRunRequest) -> WorkflowRunResponse:
         week_key = _week_key()
         requested = payload.sources or settings.ingest_sources_list
@@ -509,6 +560,26 @@ class DefaultWorkflowService(WorkflowService):
         _write_verification_artifacts(week_key, verification_payload)
 
         alpha_cards = [self._extract_alpha(db, paper) for paper in papers_added]
+
+        # Paper-grounded research memory: hypothesis / methods / results per paper
+        for paper in papers_added:
+            hmr = self._extract_hypothesis_method_results(paper)
+            for key, mem_type in (("hypothesis", "paper_hypothesis"), ("methods", "paper_methods"), ("results", "paper_results")):
+                text = (hmr.get(key) or "").strip()
+                if not text:
+                    continue
+                mem_key = f"{week_key}:{mem_type}:{paper.id}"
+                db.merge(
+                    ResearchMemoryEntry(
+                        memory_key=mem_key,
+                        memory_type=mem_type,
+                        title=f"{paper.title[:120]} ({key})",
+                        summary=text,
+                        source_week=week_key,
+                        provenance=f"paper_id={paper.id}; source={paper.source}; arxiv_id={paper.arxiv_id or ''}",
+                        embedding_vector=_embed_text(text, dim=1024),
+                    )
+                )
 
         hypotheses_input = _build_hypotheses(alpha_cards, week_key)
         hypotheses: list[Hypothesis] = []
