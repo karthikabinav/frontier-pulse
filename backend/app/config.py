@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     arxiv_recent_hours: int = 24
     arxiv_auto_expand_on_empty: bool = True
     arxiv_expand_hours: int = 96
+    arxiv_fetch_floor: int = 80
+    arxiv_page_size: int = 100
     include_revised_papers: bool = True
     dedupe_strategy: str = "fuzzy_title_abstract"
     pdf_parser_primary: str = "pymupdf"

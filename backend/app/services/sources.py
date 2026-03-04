@@ -108,6 +108,7 @@ class ArxivConnector:
         recent_hours: int = 24,
         auto_expand_on_empty: bool = True,
         expand_hours: int = 96,
+        page_size: int = 100,
     ) -> None:
         self.categories = categories
         self.parser_primary = parser_primary
@@ -115,65 +116,88 @@ class ArxivConnector:
         self.recent_hours = recent_hours
         self.auto_expand_on_empty = auto_expand_on_empty
         self.expand_hours = max(expand_hours, recent_hours)
+        self.page_size = max(25, min(200, page_size))
 
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
         query = "+OR+".join([f"cat:{cat}" for cat in self.categories])
-        url = (
-            "https://export.arxiv.org/api/query"
-            f"?search_query={query}&sortBy=lastUpdatedDate&sortOrder=descending&start=0&max_results={max_items}"
-        )
-        response = _request_with_retry(url)
-        root = ElementTree.fromstring(response.text)
         docs: list[SourceDocument] = []
+        seen_ids: set[str] = set()
 
         cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, self.recent_hours))
+        start = 0
+        page_size = min(self.page_size, max(1, max_items))
 
-        for entry in root.findall("atom:entry", self.namespace):
-            title = (entry.findtext("atom:title", default="", namespaces=self.namespace) or "").strip()
-            abstract = (entry.findtext("atom:summary", default="", namespaces=self.namespace) or "").strip()
-            entry_id = (entry.findtext("atom:id", default="", namespaces=self.namespace) or "").strip()
-            published = (entry.findtext("atom:published", default="", namespaces=self.namespace) or "").strip()
-            updated = (entry.findtext("atom:updated", default="", namespaces=self.namespace) or "").strip()
-
-            authors = []
-            for author_node in entry.findall("atom:author", self.namespace):
-                name = author_node.findtext("atom:name", default="", namespaces=self.namespace)
-                if name:
-                    authors.append(name.strip())
-
-            pdf_url = ""
-            for link in entry.findall("atom:link", self.namespace):
-                if link.attrib.get("title") == "pdf":
-                    pdf_url = link.attrib.get("href", "")
-
-            published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
-            updated_at = datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else published_at
-            # arXiv daily freshness should key off updated_at (new + revised papers)
-            if updated_at < cutoff:
-                continue
-
-            fallback_text = f"{title}\n\n{abstract}"
-            full_text = _extract_arxiv_full_text(
-                pdf_url,
-                fallback_text,
-                parser_primary=self.parser_primary,
-                parser_fallback=self.parser_fallback,
+        # arXiv can have dense daily activity; paginate until we hit cutoff
+        # or reach max_items, rather than assuming one page is enough.
+        while len(docs) < max_items:
+            url = (
+                "https://export.arxiv.org/api/query"
+                f"?search_query={query}&sortBy=lastUpdatedDate&sortOrder=descending&start={start}&max_results={page_size}"
             )
+            response = _request_with_retry(url)
+            root = ElementTree.fromstring(response.text)
+            entries = root.findall("atom:entry", self.namespace)
+            if not entries:
+                break
 
-            docs.append(
-                SourceDocument(
-                    source="arxiv",
-                    source_id=entry_id,
-                    title=title,
-                    authors=", ".join(authors),
-                    abstract=abstract,
-                    full_text=full_text,
-                    published_at=published_at,
-                    updated_at=updated_at,
-                    source_url=pdf_url or entry_id,
-                    arxiv_id=entry_id.split("/")[-1],
+            reached_older_than_cutoff = False
+            for entry in entries:
+                title = (entry.findtext("atom:title", default="", namespaces=self.namespace) or "").strip()
+                abstract = (entry.findtext("atom:summary", default="", namespaces=self.namespace) or "").strip()
+                entry_id = (entry.findtext("atom:id", default="", namespaces=self.namespace) or "").strip()
+                published = (entry.findtext("atom:published", default="", namespaces=self.namespace) or "").strip()
+                updated = (entry.findtext("atom:updated", default="", namespaces=self.namespace) or "").strip()
+
+                if not entry_id or entry_id in seen_ids:
+                    continue
+
+                authors = []
+                for author_node in entry.findall("atom:author", self.namespace):
+                    name = author_node.findtext("atom:name", default="", namespaces=self.namespace)
+                    if name:
+                        authors.append(name.strip())
+
+                pdf_url = ""
+                for link in entry.findall("atom:link", self.namespace):
+                    if link.attrib.get("title") == "pdf":
+                        pdf_url = link.attrib.get("href", "")
+
+                published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                updated_at = datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else published_at
+                # arXiv daily freshness should key off updated_at (new + revised papers)
+                if updated_at < cutoff:
+                    reached_older_than_cutoff = True
+                    continue
+
+                fallback_text = f"{title}\n\n{abstract}"
+                full_text = _extract_arxiv_full_text(
+                    pdf_url,
+                    fallback_text,
+                    parser_primary=self.parser_primary,
+                    parser_fallback=self.parser_fallback,
                 )
-            )
+
+                docs.append(
+                    SourceDocument(
+                        source="arxiv",
+                        source_id=entry_id,
+                        title=title,
+                        authors=", ".join(authors),
+                        abstract=abstract,
+                        full_text=full_text,
+                        published_at=published_at,
+                        updated_at=updated_at,
+                        source_url=pdf_url or entry_id,
+                        arxiv_id=entry_id.split("/")[-1],
+                    )
+                )
+                seen_ids.add(entry_id)
+                if len(docs) >= max_items:
+                    break
+
+            if reached_older_than_cutoff or len(entries) < page_size or len(docs) >= max_items:
+                break
+            start += page_size
 
         if not docs and self.auto_expand_on_empty and self.expand_hours > self.recent_hours:
             expanded = ArxivConnector(
@@ -183,6 +207,7 @@ class ArxivConnector:
                 recent_hours=self.expand_hours,
                 auto_expand_on_empty=False,
                 expand_hours=self.expand_hours,
+                page_size=self.page_size,
             )
             return expanded.fetch(max_items=max_items)
 

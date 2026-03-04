@@ -315,6 +315,7 @@ class DefaultWorkflowService(WorkflowService):
                 recent_hours=settings.arxiv_recent_hours,
                 auto_expand_on_empty=settings.arxiv_auto_expand_on_empty,
                 expand_hours=settings.arxiv_expand_hours,
+                page_size=settings.arxiv_page_size,
             ),
             "openreview": OpenReviewConnector(),
             "frontier_blogs": RSSConnector("frontier_blogs", rss["frontier_blogs"]),
@@ -452,8 +453,11 @@ class DefaultWorkflowService(WorkflowService):
             connector = connectors.get(source)
             if not connector:
                 continue
+            source_cap = per_source_cap
+            if source == "arxiv":
+                source_cap = max(source_cap, settings.arxiv_fetch_floor)
             try:
-                fetched = connector.fetch(max_items=per_source_cap)
+                fetched = connector.fetch(max_items=source_cap)
                 docs.extend(fetched)
             except Exception as exc:
                 source_errors.append(f"{source}:{exc}")
