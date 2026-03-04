@@ -231,6 +231,7 @@ def _render_brief(
     cards: list[PaperAlphaCard],
     hyps: list[Hypothesis],
     long_horizon_insight: str,
+    paper_hmr: Optional[dict[int, dict[str, str]]] = None,
 ) -> str:
     count_by_source = Counter([p.source for p in papers])
     source_lines = "\n".join([f"- {k}: {v}" for k, v in sorted(count_by_source.items())]) or "- none"
@@ -248,6 +249,26 @@ def _render_brief(
         citation_lines.append(f"- {aid}: {p.source_url}")
     arxiv_section = "\n".join(arxiv_lines) if arxiv_lines else "- none"
     citation_section = "\n".join(citation_lines) if citation_lines else "- none"
+
+    paper_hmr = paper_hmr or {}
+    research_notes_lines: list[str] = []
+    for p in arxiv_papers[:8]:
+        hmr = paper_hmr.get(p.id, {})
+        hyp = (hmr.get("hypothesis") or "").strip()
+        methods = (hmr.get("methods") or "").strip()
+        results = (hmr.get("results") or "").strip()
+        aid = p.arxiv_id or p.source_id
+        if not any([hyp, methods, results]):
+            continue
+        caveat = "Needs independent replication beyond benchmark-local setup." if results else "Results unclear from abstract; requires full-paper validation."
+        research_notes_lines.append(
+            f"- {aid} — **{p.title}**\n"
+            f"  - Hypothesis: {hyp[:260] if hyp else 'N/A'}\n"
+            f"  - Methods delta: {methods[:320] if methods else 'N/A'}\n"
+            f"  - Results: {results[:280] if results else 'N/A'}\n"
+            f"  - Caveat: {caveat}"
+        )
+    research_notes = "\n".join(research_notes_lines) if research_notes_lines else "- none"
 
     return f"""# aifrontierpulse Weekly Brief ({week_key})
 
@@ -267,6 +288,9 @@ def _render_brief(
 
 ## Top Hypothesis
 - {top_hyp}
+
+## Paper-Specific Research Notes (Hypothesis / Methods / Results)
+{research_notes}
 
 ## Strategic Flags
 - Citation provenance is {'enabled' if settings.citation_provenance_required else 'disabled'}.
@@ -562,8 +586,10 @@ class DefaultWorkflowService(WorkflowService):
         alpha_cards = [self._extract_alpha(db, paper) for paper in papers_added]
 
         # Paper-grounded research memory: hypothesis / methods / results per paper
+        paper_hmr: dict[int, dict[str, str]] = {}
         for paper in papers_added:
             hmr = self._extract_hypothesis_method_results(paper)
+            paper_hmr[paper.id] = hmr
             for key, mem_type in (("hypothesis", "paper_hypothesis"), ("methods", "paper_methods"), ("results", "paper_results")):
                 text = (hmr.get(key) or "").strip()
                 if not text:
@@ -618,7 +644,7 @@ class DefaultWorkflowService(WorkflowService):
         )
         version_number = int(current_version or 0) + 1
         long_horizon_insight = _derive_long_horizon_insights(db, week_key, lookback=6)
-        markdown = _render_brief(week_key, papers_added, alpha_cards, hypotheses, long_horizon_insight)
+        markdown = _render_brief(week_key, papers_added, alpha_cards, hypotheses, long_horizon_insight, paper_hmr=paper_hmr)
         brief_version = ResearchBriefVersion(
             brief_id=brief.id,
             version_number=version_number,
