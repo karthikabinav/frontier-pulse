@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     arxiv_expand_hours: int = 96
     arxiv_fetch_floor: int = 80
     arxiv_page_size: int = 100
+    arxiv_include_current_id_month: bool = True
+    arxiv_id_months_back: int = 0
+    arxiv_announcement_days: int = 7
     include_revised_papers: bool = True
     dedupe_strategy: str = "fuzzy_title_abstract"
     pdf_parser_primary: str = "pymupdf"

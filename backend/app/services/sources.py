@@ -109,6 +109,9 @@ class ArxivConnector:
         auto_expand_on_empty: bool = True,
         expand_hours: int = 96,
         page_size: int = 100,
+        include_current_id_month: bool = True,
+        id_months_back: int = 0,
+        announcement_days: int = 7,
     ) -> None:
         self.categories = categories
         self.parser_primary = parser_primary
@@ -117,6 +120,22 @@ class ArxivConnector:
         self.auto_expand_on_empty = auto_expand_on_empty
         self.expand_hours = max(expand_hours, recent_hours)
         self.page_size = max(25, min(200, page_size))
+        self.include_current_id_month = include_current_id_month
+        self.id_months_back = max(0, id_months_back)
+        self.announcement_days = max(1, announcement_days)
+
+    def _id_month_prefixes(self) -> list[str]:
+        now = datetime.now(timezone.utc)
+        year = now.year
+        month = now.month
+        out: list[str] = []
+        for _ in range(self.id_months_back + 1):
+            out.append(f"{year % 100:02d}{month:02d}")
+            month -= 1
+            if month == 0:
+                month = 12
+                year -= 1
+        return out
 
     def fetch(self, max_items: int = 100) -> list[SourceDocument]:
         query = "+OR+".join([f"cat:{cat}" for cat in self.categories])
@@ -199,6 +218,155 @@ class ArxivConnector:
                 break
             start += page_size
 
+        # Announcement-aware supplement: include current arXiv ID month (e.g., 2603.*)
+        # even when updated_at falls outside a strict last-N-hours cutoff.
+        if self.include_current_id_month and len(docs) < max_items:
+            supplement_cap = max_items
+            month_page_size = min(200, max(50, self.page_size))
+            for prefix in self._id_month_prefixes():
+                month_start = 0
+                while len(docs) < supplement_cap:
+                    month_url = (
+                        "https://export.arxiv.org/api/query"
+                        f"?search_query=id:{prefix}.*&sortBy=submittedDate&sortOrder=descending"
+                        f"&start={month_start}&max_results={month_page_size}"
+                    )
+                    month_response = _request_with_retry(month_url)
+                    month_root = ElementTree.fromstring(month_response.text)
+                    month_entries = month_root.findall("atom:entry", self.namespace)
+                    if not month_entries:
+                        break
+
+                    for entry in month_entries:
+                        title = (entry.findtext("atom:title", default="", namespaces=self.namespace) or "").strip()
+                        abstract = (entry.findtext("atom:summary", default="", namespaces=self.namespace) or "").strip()
+                        entry_id = (entry.findtext("atom:id", default="", namespaces=self.namespace) or "").strip()
+                        published = (entry.findtext("atom:published", default="", namespaces=self.namespace) or "").strip()
+                        updated = (entry.findtext("atom:updated", default="", namespaces=self.namespace) or "").strip()
+
+                        if not entry_id or entry_id in seen_ids:
+                            continue
+
+                        entry_cats = [c.attrib.get("term", "") for c in entry.findall("atom:category", self.namespace)]
+                        if self.categories and not any(cat in self.categories for cat in entry_cats):
+                            continue
+
+                        authors = []
+                        for author_node in entry.findall("atom:author", self.namespace):
+                            name = author_node.findtext("atom:name", default="", namespaces=self.namespace)
+                            if name:
+                                authors.append(name.strip())
+
+                        pdf_url = ""
+                        for link in entry.findall("atom:link", self.namespace):
+                            if link.attrib.get("title") == "pdf":
+                                pdf_url = link.attrib.get("href", "")
+
+                        published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                        updated_at = datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else published_at
+
+                        fallback_text = f"{title}\n\n{abstract}"
+                        # Keep announcement-lane cheap: avoid PDF fetch for wide month scans.
+                        full_text = fallback_text
+
+                        docs.append(
+                            SourceDocument(
+                                source="arxiv",
+                                source_id=entry_id,
+                                title=title,
+                                authors=", ".join(authors),
+                                abstract=abstract,
+                                full_text=full_text,
+                                published_at=published_at,
+                                updated_at=updated_at,
+                                source_url=pdf_url or entry_id,
+                                arxiv_id=entry_id.split("/")[-1],
+                            )
+                        )
+                        seen_ids.add(entry_id)
+                        if len(docs) >= supplement_cap:
+                            break
+
+                    if len(month_entries) < month_page_size or len(docs) >= supplement_cap:
+                        break
+                    month_start += month_page_size
+
+                if len(docs) >= supplement_cap:
+                    break
+
+        # Announcement-window supplement by submittedDate per category.
+        supplement_cap = max(max_items, max_items * 4)
+        if len(docs) < supplement_cap:
+            end = datetime.now(timezone.utc)
+            start_dt = end - timedelta(days=self.announcement_days)
+            start_str = start_dt.strftime("%Y%m%d%H%M")
+            end_str = end.strftime("%Y%m%d%H%M")
+
+            for cat in self.categories:
+                if len(docs) >= supplement_cap:
+                    break
+
+                ann_start = 0
+                ann_page_size = min(200, max(50, self.page_size))
+                while len(docs) < supplement_cap:
+                    ann_url = (
+                        "https://export.arxiv.org/api/query"
+                        f"?search_query=cat:{cat}+AND+submittedDate:[{start_str}+TO+{end_str}]"
+                        f"&sortBy=submittedDate&sortOrder=descending&start={ann_start}&max_results={ann_page_size}"
+                    )
+                    ann_response = _request_with_retry(ann_url)
+                    ann_root = ElementTree.fromstring(ann_response.text)
+                    ann_entries = ann_root.findall("atom:entry", self.namespace)
+                    if not ann_entries:
+                        break
+
+                    for entry in ann_entries:
+                        title = (entry.findtext("atom:title", default="", namespaces=self.namespace) or "").strip()
+                        abstract = (entry.findtext("atom:summary", default="", namespaces=self.namespace) or "").strip()
+                        entry_id = (entry.findtext("atom:id", default="", namespaces=self.namespace) or "").strip()
+                        published = (entry.findtext("atom:published", default="", namespaces=self.namespace) or "").strip()
+                        updated = (entry.findtext("atom:updated", default="", namespaces=self.namespace) or "").strip()
+
+                        if not entry_id or entry_id in seen_ids:
+                            continue
+
+                        authors = []
+                        for author_node in entry.findall("atom:author", self.namespace):
+                            name = author_node.findtext("atom:name", default="", namespaces=self.namespace)
+                            if name:
+                                authors.append(name.strip())
+
+                        pdf_url = ""
+                        for link in entry.findall("atom:link", self.namespace):
+                            if link.attrib.get("title") == "pdf":
+                                pdf_url = link.attrib.get("href", "")
+
+                        published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
+                        updated_at = datetime.fromisoformat(updated.replace("Z", "+00:00")) if updated else published_at
+
+                        fallback_text = f"{title}\n\n{abstract}"
+                        docs.append(
+                            SourceDocument(
+                                source="arxiv",
+                                source_id=entry_id,
+                                title=title,
+                                authors=", ".join(authors),
+                                abstract=abstract,
+                                full_text=fallback_text,
+                                published_at=published_at,
+                                updated_at=updated_at,
+                                source_url=pdf_url or entry_id,
+                                arxiv_id=entry_id.split("/")[-1],
+                            )
+                        )
+                        seen_ids.add(entry_id)
+                        if len(docs) >= supplement_cap:
+                            break
+
+                    if len(ann_entries) < ann_page_size or len(docs) >= supplement_cap:
+                        break
+                    ann_start += ann_page_size
+
         if not docs and self.auto_expand_on_empty and self.expand_hours > self.recent_hours:
             expanded = ArxivConnector(
                 self.categories,
@@ -208,6 +376,9 @@ class ArxivConnector:
                 auto_expand_on_empty=False,
                 expand_hours=self.expand_hours,
                 page_size=self.page_size,
+                include_current_id_month=self.include_current_id_month,
+                id_months_back=self.id_months_back,
+                announcement_days=self.announcement_days,
             )
             return expanded.fetch(max_items=max_items)
 
