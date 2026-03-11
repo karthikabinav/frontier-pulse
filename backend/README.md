@@ -43,6 +43,27 @@ docker compose up -d db
 - `POST /api/v1/exports/generate`
 - `GET /api/v1/qa/checklist`
 
+## Experiment plan generator (v0)
+
+Generate execution-ready experiment plans from structured hypothesis specs.
+
+Script:
+- `backend/scripts/generate_experiment_plan.py`
+
+Usage:
+
+```bash
+cd backend
+python3 scripts/generate_experiment_plan.py \
+  --input artifacts/plans/sample_hypotheses.json \
+  --output-md artifacts/plans/sample_experiment_plan.md \
+  --output-json artifacts/plans/sample_experiment_plan.json
+```
+
+Outputs:
+- `backend/artifacts/plans/sample_experiment_plan.md`
+- `backend/artifacts/plans/sample_experiment_plan.json`
+
 ## Scheduler
 
 Nightly scheduler runs in-process when `SCHEDULER_MODE=in_process`.

@@ -55,6 +55,24 @@ docker compose -f docker-compose.app.yml up --build
 
 This launches Postgres+pgvector, backend API, and frontend UI.
 
+## New: Experiment Plan Generator (v0)
+
+Frontier Pulse now includes a backend script to convert structured hypothesis specs into execution-ready experiment plans.
+
+- Script: `backend/scripts/generate_experiment_plan.py`
+- Inputs: hypothesis JSON
+- Outputs: Markdown + JSON plan artifacts
+
+Quick run:
+
+```bash
+cd backend
+python3 scripts/generate_experiment_plan.py \
+  --input artifacts/plans/sample_hypotheses.json \
+  --output-md artifacts/plans/sample_experiment_plan.md \
+  --output-json artifacts/plans/sample_experiment_plan.json
+```
+
 ## Documentation
 
 - Decisions: `DECISIONS.md`

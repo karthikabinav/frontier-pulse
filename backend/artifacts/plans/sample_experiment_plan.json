@@ -1,0 +1,43 @@
+{
+  "generated_at_utc": "2026-03-11T17:29:31.985561+00:00",
+  "count": 1,
+  "plans": [
+    {
+      "hypothesis_id": "H-2026-03-11-ctx-router",
+      "claim": "Adaptive context routing to specialist tool-using heads improves pass@1 on long-horizon research QA.",
+      "primary_metric": "pass@1",
+      "secondary_metrics": [
+        "token_cost_per_answer",
+        "citation_precision",
+        "latency_p95_ms"
+      ],
+      "timeline_days": 5,
+      "trial_matrix": [
+        {
+          "trial": "T0",
+          "condition": "baseline",
+          "config": "single-policy-agent + fixed retrieval top_k=12",
+          "purpose": "Reference point"
+        },
+        {
+          "trial": "T1",
+          "condition": "intervention",
+          "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12}",
+          "purpose": "Measure gain from proposed change"
+        },
+        {
+          "trial": "T2",
+          "condition": "ablation-low-budget",
+          "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | 50% compute budget",
+          "purpose": "Test efficiency sensitivity"
+        },
+        {
+          "trial": "T3",
+          "condition": "robustness-shift",
+          "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | distribution shift split",
+          "purpose": "Check generalization under shift"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "hypothesis_id": "H-2026-03-11-ctx-router",
+    "claim": "Adaptive context routing to specialist tool-using heads improves pass@1 on long-horizon research QA.",
+    "rationale": "Routing should reduce irrelevant token usage and increase retrieval precision under fixed context windows.",
+    "baseline": "single-policy-agent + fixed retrieval top_k=12",
+    "intervention": "mixture-of-experts router + per-head retrieval top_k in {4,8,12}",
+    "datasets": [
+      "LongForm Research QA v2",
+      "FrontierPulse internal benchmark set A"
+    ],
+    "primary_metric": "pass@1",
+    "secondary_metrics": ["token_cost_per_answer", "citation_precision", "latency_p95_ms"],
+    "budget_gpu_hours": 36,
+    "max_trials": 4
+  }
+]
