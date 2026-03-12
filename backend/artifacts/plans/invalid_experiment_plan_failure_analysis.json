@@ -1,0 +1,12 @@
+{
+  "generated_at_utc": "2026-03-12T01:11:18.046841+00:00",
+  "status": "failed",
+  "input": "artifacts/plans/invalid_hypotheses.json",
+  "error": "Schema validation failed for one or more hypothesis specs: [{\"index\": 0, \"hypothesis_id\": \"H-bad-1\", \"errors\": [{\"type\": \"string_too_short\", \"loc\": [\"claim\"], \"msg\": \"String should have at least 10 characters\", \"input\": \"too short\", \"ctx\": {\"min_length\": 10}, \"url\": \"https://errors.pydantic.dev/2.12/v/string_too_short\"}, {\"type\": \"string_too_short\", \"loc\": [\"baseline\"], \"msg\": \"String should have at least 3 characters\", \"input\": \"\", \"ctx\": {\"min_length\": 3}, \"url\": \"https://errors.pydantic.dev/2.12/v/string_too_short\"}, {\"type\": \"value_error\", \"loc\": [\"datasets\"], \"msg\": \"Value error, array contains empty/blank strings\", \"input\": [\"\", \"Dataset-A\"], \"ctx\": {\"error\": \"array contains empty/blank strings\"}, \"url\": \"https://errors.pydantic.dev/2.12/v/value_error\"}, {\"type\": \"string_too_short\", \"loc\": [\"primary_metric\"], \"msg\": \"String should have at least 2 characters\", \"input\": \"\", \"ctx\": {\"min_length\": 2}, \"url\": \"https://errors.pydantic.dev/2.12/v/string_too_short\"}, {\"type\": \"value_error\", \"loc\": [\"secondary_metrics\"], \"msg\": \"Value error, array contains empty/blank strings\", \"input\": [\"latency\", \"\"], \"ctx\": {\"error\": \"array contains empty/blank strings\"}, \"url\": \"https://errors.pydantic.dev/2.12/v/value_error\"}, {\"type\": \"greater_than_equal\", \"loc\": [\"budget_gpu_hours\"], \"msg\": \"Input should be greater than or equal to 1\", \"input\": 0, \"ctx\": {\"ge\": 1}, \"url\": \"https://errors.pydantic.dev/2.12/v/greater_than_equal\"}, {\"type\": \"less_than_equal\", \"loc\": [\"max_trials\"], \"msg\": \"Input should be less than or equal to 4\", \"input\": 9, \"ctx\": {\"le\": 4}, \"url\": \"https://errors.pydantic.dev/2.12/v/less_than_equal\"}]}]",
+  "mitigations": [
+    "Validate JSON and schema before execution",
+    "Ensure required fields and type constraints are satisfied",
+    "Confirm file paths/permissions",
+    "Retry generation and verify both outputs"
+  ]
+}

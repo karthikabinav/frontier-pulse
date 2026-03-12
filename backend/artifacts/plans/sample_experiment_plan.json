@@ -1,9 +1,9 @@
 {
-  "generated_at_utc": "2026-03-11T17:29:31.985561+00:00",
-  "count": 1,
+  "generated_at_utc": "2026-03-12T01:11:28.555578+00:00",
+  "count": 4,
   "plans": [
     {
-      "hypothesis_id": "H-2026-03-11-ctx-router",
+      "hypothesis_id": "H-2026-03-12-ctx-router",
       "claim": "Adaptive context routing to specialist tool-using heads improves pass@1 on long-horizon research QA.",
       "primary_metric": "pass@1",
       "secondary_metrics": [
@@ -35,6 +35,111 @@
           "trial": "T3",
           "condition": "robustness-shift",
           "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | distribution shift split",
+          "purpose": "Check generalization under shift"
+        }
+      ]
+    },
+    {
+      "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+      "claim": "Progress-aware reward shaping increases multi-step task completion for tool-using agents.",
+      "primary_metric": "task_completion_rate",
+      "secondary_metrics": [
+        "steps_to_success",
+        "reward_model_auc",
+        "wall_clock_sec"
+      ],
+      "timeline_days": 4,
+      "trial_matrix": [
+        {
+          "trial": "T0",
+          "condition": "baseline",
+          "config": "binary terminal reward only",
+          "purpose": "Reference point"
+        },
+        {
+          "trial": "T1",
+          "condition": "intervention",
+          "config": "dense reward model with promise/progress labels + GAE smoothing",
+          "purpose": "Measure gain from proposed change"
+        },
+        {
+          "trial": "T2",
+          "condition": "ablation-low-budget",
+          "config": "dense reward model with promise/progress labels + GAE smoothing | 50% compute budget",
+          "purpose": "Test efficiency sensitivity"
+        },
+        {
+          "trial": "T3",
+          "condition": "robustness-shift",
+          "config": "dense reward model with promise/progress labels + GAE smoothing | distribution shift split",
+          "purpose": "Check generalization under shift"
+        }
+      ]
+    },
+    {
+      "hypothesis_id": "H-2026-03-12-latency-routing",
+      "claim": "Latency-conditioned model routing improves utility per wall-clock under tool latency.",
+      "primary_metric": "utility_per_minute",
+      "secondary_metrics": [
+        "success_rate",
+        "cost_per_task_usd",
+        "latency_p95_ms"
+      ],
+      "timeline_days": 4,
+      "trial_matrix": [
+        {
+          "trial": "T0",
+          "condition": "baseline",
+          "config": "single 70B planner for all steps",
+          "purpose": "Reference point"
+        },
+        {
+          "trial": "T1",
+          "condition": "intervention",
+          "config": "latency-aware router selecting 8B/70B by budget_remaining_ms",
+          "purpose": "Measure gain from proposed change"
+        },
+        {
+          "trial": "T2",
+          "condition": "ablation-low-budget",
+          "config": "latency-aware router selecting 8B/70B by budget_remaining_ms | 50% compute budget",
+          "purpose": "Test efficiency sensitivity"
+        }
+      ]
+    },
+    {
+      "hypothesis_id": "H-2026-03-12-citation-robustness",
+      "claim": "Grounded citation validation reduces hallucinated claims in weekly briefs.",
+      "primary_metric": "unsupported_claim_rate",
+      "secondary_metrics": [
+        "brief_recall",
+        "editor_time_min",
+        "citation_coverage"
+      ],
+      "timeline_days": 3,
+      "trial_matrix": [
+        {
+          "trial": "T0",
+          "condition": "baseline",
+          "config": "generation-only weekly summarizer",
+          "purpose": "Reference point"
+        },
+        {
+          "trial": "T1",
+          "condition": "intervention",
+          "config": "summarizer + claim-evidence verifier + confidence gating",
+          "purpose": "Measure gain from proposed change"
+        },
+        {
+          "trial": "T2",
+          "condition": "ablation-low-budget",
+          "config": "summarizer + claim-evidence verifier + confidence gating | 50% compute budget",
+          "purpose": "Test efficiency sensitivity"
+        },
+        {
+          "trial": "T3",
+          "condition": "robustness-shift",
+          "config": "summarizer + claim-evidence verifier + confidence gating | distribution shift split",
           "purpose": "Check generalization under shift"
         }
       ]

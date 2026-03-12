@@ -1,0 +1,14 @@
+[
+  {
+    "hypothesis_id": "H-bad-1",
+    "claim": "too short",
+    "rationale": "missing detail",
+    "baseline": "",
+    "intervention": "new method",
+    "datasets": ["", "Dataset-A"],
+    "primary_metric": "",
+    "secondary_metrics": ["latency", ""],
+    "budget_gpu_hours": 0,
+    "max_trials": 9
+  }
+]

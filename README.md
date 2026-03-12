@@ -12,7 +12,9 @@ V1 backend and frontend are implemented with:
 - QA checklist and export generation (Twitter thread, LinkedIn, markdown)
 - Hotkey-enabled review UI
 
-## Quick Start
+## Quick Start (Reproducible ≤20 min path)
+
+This path reproduces the full local stack and validates the experiment-plan generator in ~15–20 minutes on a typical laptop.
 
 ### 1. Start database
 
@@ -72,6 +74,33 @@ python3 scripts/generate_experiment_plan.py \
   --output-md artifacts/plans/sample_experiment_plan.md \
   --output-json artifacts/plans/sample_experiment_plan.json
 ```
+
+Validation/failure-path run (writes explicit mitigation artifacts on error):
+
+```bash
+cd backend
+python3 scripts/generate_experiment_plan.py \
+  --input artifacts/plans/invalid_hypotheses.json \
+  --output-md artifacts/plans/invalid_experiment_plan.md \
+  --output-json artifacts/plans/invalid_experiment_plan.json || true
+
+ls -1 artifacts/plans/*failure_analysis.*
+```
+
+### Repro checklist (<=20 min)
+
+1. Bring up DB + backend + frontend using Quick Start steps.
+2. Run sample plan generation command; verify both `.md` and `.json` artifacts are produced.
+3. Run failure-path command; verify `_failure_analysis.md` and `_failure_analysis.json` are produced with mitigation notes.
+4. Open UI (`http://localhost:5174`) to verify end-to-end local stack.
+
+## Limitations & Safety
+
+- **Generator is template-driven**: it does not execute experiments or validate scientific truth claims.
+- **Input quality is critical**: schema validation catches format/type issues, not conceptual flaws in hypotheses.
+- **Failure artifacts are advisory**: mitigation notes are operational guidance, not security/compliance guarantees.
+- **Human review required**: generated plans should be reviewed before any compute spend, publication, or policy-sensitive use.
+- **No autonomous external actions**: this repo does not grant implicit permission for public posting, data sharing, or model deployment.
 
 ## Documentation
 
