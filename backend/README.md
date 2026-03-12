@@ -64,6 +64,27 @@ Outputs:
 - `backend/artifacts/plans/sample_experiment_plan.md`
 - `backend/artifacts/plans/sample_experiment_plan.json`
 
+## Eval slice (baseline vs current)
+
+Executable benchmark fixture + scoring script for plan quality/regression.
+
+Inputs:
+- `backend/artifacts/evals/hypothesis_eval_fixture.json` (4 valid hypotheses + 1 edge/failure case)
+
+Script:
+- `backend/scripts/score_experiment_plan_eval.py`
+
+Usage:
+
+```bash
+cd backend
+python3 scripts/score_experiment_plan_eval.py --runs 3
+```
+
+Outputs:
+- `backend/artifacts/evals/results_latest.json`
+- `backend/artifacts/evals/results_latest.md`
+
 ## Scheduler
 
 Nightly scheduler runs in-process when `SCHEDULER_MODE=in_process`.

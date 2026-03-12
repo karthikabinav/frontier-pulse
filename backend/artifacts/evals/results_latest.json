@@ -1,0 +1,746 @@
+{
+  "fixture_path": "artifacts/evals/hypothesis_eval_fixture.json",
+  "runs": 3,
+  "runs_detail": [
+    {
+      "run_id": 1,
+      "seed": 101,
+      "baseline": {
+        "model": "baseline",
+        "valid_cases": 4,
+        "expected_failure_cases": 1,
+        "successes": 4,
+        "expected_failures_caught": 1,
+        "success_rate": 1.0,
+        "failure_handling_rate": 1.0,
+        "avg_quality_score": 0.0,
+        "overall_score": 0.4,
+        "plans": [
+          {
+            "hypothesis_id": "H-2026-03-12-ctx-router",
+            "primary_metric": "pass@1",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-citation-robustness",
+            "primary_metric": "unsupported_claim_rate",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-latency-routing",
+            "primary_metric": "utility_per_minute",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+            "primary_metric": "task_completion_rate",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-edge-missing-fields",
+            "expected_failure": true,
+            "error": "'rationale'"
+          }
+        ]
+      },
+      "current": {
+        "model": "current",
+        "valid_cases": 4,
+        "expected_failure_cases": 1,
+        "successes": 4,
+        "expected_failures_caught": 1,
+        "success_rate": 1.0,
+        "failure_handling_rate": 1.0,
+        "avg_quality_score": 0.9375,
+        "overall_score": 0.9625,
+        "plans": [
+          {
+            "hypothesis_id": "H-2026-03-12-ctx-router",
+            "primary_metric": "pass@1",
+            "secondary_metrics": [
+              "token_cost_per_answer",
+              "citation_precision",
+              "latency_p95_ms"
+            ],
+            "timeline_days": 5,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "single-policy-agent + fixed retrieval top_k=12",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12}",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-citation-robustness",
+            "primary_metric": "unsupported_claim_rate",
+            "secondary_metrics": [
+              "brief_recall",
+              "editor_time_min",
+              "citation_coverage"
+            ],
+            "timeline_days": 3,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "generation-only weekly summarizer",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "summarizer + claim-evidence verifier + confidence gating",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "summarizer + claim-evidence verifier + confidence gating | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "summarizer + claim-evidence verifier + confidence gating | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-latency-routing",
+            "primary_metric": "utility_per_minute",
+            "secondary_metrics": [
+              "success_rate",
+              "cost_per_task_usd",
+              "latency_p95_ms"
+            ],
+            "timeline_days": 4,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "single 70B planner for all steps",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "latency-aware router selecting 8B/70B by budget_remaining_ms",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "latency-aware router selecting 8B/70B by budget_remaining_ms | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+            "primary_metric": "task_completion_rate",
+            "secondary_metrics": [
+              "steps_to_success",
+              "reward_model_auc",
+              "wall_clock_sec"
+            ],
+            "timeline_days": 4,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "binary terminal reward only",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "dense reward model with promise/progress labels + GAE smoothing",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "dense reward model with promise/progress labels + GAE smoothing | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "dense reward model with promise/progress labels + GAE smoothing | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-edge-missing-fields",
+            "expected_failure": true,
+            "error": "'rationale'"
+          }
+        ]
+      }
+    },
+    {
+      "run_id": 2,
+      "seed": 102,
+      "baseline": {
+        "model": "baseline",
+        "valid_cases": 4,
+        "expected_failure_cases": 1,
+        "successes": 4,
+        "expected_failures_caught": 1,
+        "success_rate": 1.0,
+        "failure_handling_rate": 1.0,
+        "avg_quality_score": 0.0,
+        "overall_score": 0.4,
+        "plans": [
+          {
+            "hypothesis_id": "H-2026-03-12-edge-missing-fields",
+            "expected_failure": true,
+            "error": "'rationale'"
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-citation-robustness",
+            "primary_metric": "unsupported_claim_rate",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-ctx-router",
+            "primary_metric": "pass@1",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-latency-routing",
+            "primary_metric": "utility_per_minute",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+            "primary_metric": "task_completion_rate",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          }
+        ]
+      },
+      "current": {
+        "model": "current",
+        "valid_cases": 4,
+        "expected_failure_cases": 1,
+        "successes": 4,
+        "expected_failures_caught": 1,
+        "success_rate": 1.0,
+        "failure_handling_rate": 1.0,
+        "avg_quality_score": 0.9375,
+        "overall_score": 0.9625,
+        "plans": [
+          {
+            "hypothesis_id": "H-2026-03-12-edge-missing-fields",
+            "expected_failure": true,
+            "error": "'rationale'"
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-citation-robustness",
+            "primary_metric": "unsupported_claim_rate",
+            "secondary_metrics": [
+              "brief_recall",
+              "editor_time_min",
+              "citation_coverage"
+            ],
+            "timeline_days": 3,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "generation-only weekly summarizer",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "summarizer + claim-evidence verifier + confidence gating",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "summarizer + claim-evidence verifier + confidence gating | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "summarizer + claim-evidence verifier + confidence gating | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-ctx-router",
+            "primary_metric": "pass@1",
+            "secondary_metrics": [
+              "token_cost_per_answer",
+              "citation_precision",
+              "latency_p95_ms"
+            ],
+            "timeline_days": 5,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "single-policy-agent + fixed retrieval top_k=12",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12}",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-latency-routing",
+            "primary_metric": "utility_per_minute",
+            "secondary_metrics": [
+              "success_rate",
+              "cost_per_task_usd",
+              "latency_p95_ms"
+            ],
+            "timeline_days": 4,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "single 70B planner for all steps",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "latency-aware router selecting 8B/70B by budget_remaining_ms",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "latency-aware router selecting 8B/70B by budget_remaining_ms | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+            "primary_metric": "task_completion_rate",
+            "secondary_metrics": [
+              "steps_to_success",
+              "reward_model_auc",
+              "wall_clock_sec"
+            ],
+            "timeline_days": 4,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "binary terminal reward only",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "dense reward model with promise/progress labels + GAE smoothing",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "dense reward model with promise/progress labels + GAE smoothing | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "dense reward model with promise/progress labels + GAE smoothing | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "run_id": 3,
+      "seed": 103,
+      "baseline": {
+        "model": "baseline",
+        "valid_cases": 4,
+        "expected_failure_cases": 1,
+        "successes": 4,
+        "expected_failures_caught": 1,
+        "success_rate": 1.0,
+        "failure_handling_rate": 1.0,
+        "avg_quality_score": 0.0,
+        "overall_score": 0.4,
+        "plans": [
+          {
+            "hypothesis_id": "H-2026-03-12-edge-missing-fields",
+            "expected_failure": true,
+            "error": "'rationale'"
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-ctx-router",
+            "primary_metric": "pass@1",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-latency-routing",
+            "primary_metric": "utility_per_minute",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+            "primary_metric": "task_completion_rate",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-citation-robustness",
+            "primary_metric": "unsupported_claim_rate",
+            "secondary_metrics": [],
+            "timeline_days": 2,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention"
+              }
+            ]
+          }
+        ]
+      },
+      "current": {
+        "model": "current",
+        "valid_cases": 4,
+        "expected_failure_cases": 1,
+        "successes": 4,
+        "expected_failures_caught": 1,
+        "success_rate": 1.0,
+        "failure_handling_rate": 1.0,
+        "avg_quality_score": 0.9375,
+        "overall_score": 0.9625,
+        "plans": [
+          {
+            "hypothesis_id": "H-2026-03-12-edge-missing-fields",
+            "expected_failure": true,
+            "error": "'rationale'"
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-ctx-router",
+            "primary_metric": "pass@1",
+            "secondary_metrics": [
+              "token_cost_per_answer",
+              "citation_precision",
+              "latency_p95_ms"
+            ],
+            "timeline_days": 5,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "single-policy-agent + fixed retrieval top_k=12",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12}",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "mixture-of-experts router + per-head retrieval top_k in {4,8,12} | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-latency-routing",
+            "primary_metric": "utility_per_minute",
+            "secondary_metrics": [
+              "success_rate",
+              "cost_per_task_usd",
+              "latency_p95_ms"
+            ],
+            "timeline_days": 4,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "single 70B planner for all steps",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "latency-aware router selecting 8B/70B by budget_remaining_ms",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "latency-aware router selecting 8B/70B by budget_remaining_ms | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-reward-shaped-agent",
+            "primary_metric": "task_completion_rate",
+            "secondary_metrics": [
+              "steps_to_success",
+              "reward_model_auc",
+              "wall_clock_sec"
+            ],
+            "timeline_days": 4,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "binary terminal reward only",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "dense reward model with promise/progress labels + GAE smoothing",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "dense reward model with promise/progress labels + GAE smoothing | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "dense reward model with promise/progress labels + GAE smoothing | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          },
+          {
+            "hypothesis_id": "H-2026-03-12-citation-robustness",
+            "primary_metric": "unsupported_claim_rate",
+            "secondary_metrics": [
+              "brief_recall",
+              "editor_time_min",
+              "citation_coverage"
+            ],
+            "timeline_days": 3,
+            "trial_matrix": [
+              {
+                "trial": "T0",
+                "condition": "baseline",
+                "config": "generation-only weekly summarizer",
+                "purpose": "Reference point"
+              },
+              {
+                "trial": "T1",
+                "condition": "intervention",
+                "config": "summarizer + claim-evidence verifier + confidence gating",
+                "purpose": "Measure gain from proposed change"
+              },
+              {
+                "trial": "T2",
+                "condition": "ablation-low-budget",
+                "config": "summarizer + claim-evidence verifier + confidence gating | 50% compute budget",
+                "purpose": "Test efficiency sensitivity"
+              },
+              {
+                "trial": "T3",
+                "condition": "robustness-shift",
+                "config": "summarizer + claim-evidence verifier + confidence gating | distribution shift split",
+                "purpose": "Check generalization under shift"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "aggregate": {
+    "baseline": {
+      "success_rate_mean": 1.0,
+      "failure_handling_rate_mean": 1.0,
+      "avg_quality_score_mean": 0.0,
+      "overall_score_mean": 0.4
+    },
+    "current": {
+      "success_rate_mean": 1.0,
+      "failure_handling_rate_mean": 1.0,
+      "avg_quality_score_mean": 0.9375,
+      "overall_score_mean": 0.9625
+    }
+  }
+}
